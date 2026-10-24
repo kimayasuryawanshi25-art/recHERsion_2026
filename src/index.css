@@ -1,7 +1,7 @@
 
 @import "tailwindcss";
 
-@theme {
+:root {
   --color-rose-50: #fff4f3;
   --color-rose-100: #fce7e5;
   --color-rose-200: #f4ceca;
