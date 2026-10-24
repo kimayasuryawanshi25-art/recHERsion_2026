@@ -272,11 +272,16 @@ export function EntryForm({ editMode = false }: Props) {
         )}
 
         <div className="flex items-center gap-3 pt-4 border-t border-sand-100">
-          <button type="submit" disabled={saving}
-            className="inline-flex items-center gap-2 bg-plum-600 text-white rounded-xl px-6 py-2.5 font-medium hover:bg-plum-700 transition-colors disabled:opacity-50 text-sm"
-          >
-            <Save className="w-4 h-4" /> {saving ? 'Saving...' : editMode ? 'Save Changes' : 'Save Check-in'}
-          </button>
+          
+<button
+  type="submit"
+  disabled={saving}
+  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-6 py-3 text-sm font-semibold text-white shadow-md shadow-violet-900/10 transition-all duration-200 hover:bg-[#493B72] hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9B72CF] disabled:cursor-not-allowed disabled:opacity-50"
+>
+  <Save className="h-4 w-4" />
+  {saving ? 'Saving...' : editMode ? 'Save Changes' : 'Save Check-in'}
+</button>
+
           <button type="button" onClick={() => navigate('/journal')} className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700">Cancel</button>
           {editMode && (
             <button type="button" onClick={() => setShowDelete(true)}

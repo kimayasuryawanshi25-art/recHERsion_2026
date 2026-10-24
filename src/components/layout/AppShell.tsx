@@ -28,7 +28,7 @@ import { QuickEscapeButton } from '../ui/QuickEscapeButton';
 import { pinLockService } from '../../lib/safety/pinLock';
 
 const NAV = [
-  { to: '/', icon: LayoutDashboard, label: 'Overview' },
+  { to: '/overview', icon: LayoutDashboard, label: 'Overview' },
   { to: '/journal', icon: BookOpen, label: 'Journal' },
   { to: '/timeline', icon: Clock, label: 'Timeline & Insights' },
   { to: '/consultation', icon: FileText, label: 'Appointment Prep' },
@@ -83,13 +83,13 @@ export function AppShell({
     <NavLink
       key={item.to}
       to={item.to}
-      end={item.to === '/'}
+      end={item.to === '/overview'}
       onClick={() => mobile && setMobileOpen(false)}
       className={({ isActive }) =>
         `group flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all duration-200 ${
           isActive
-            ? 'bg-plum-100 text-plum-700 font-semibold'
-            : 'text-stone-600 hover:bg-sand-100 hover:text-stone-900'
+            ? 'bg-[#EDE7F6] text-[#5B4B8A] font-semibold'
+            : 'text-stone-600 hover:bg-[#FAFAFF] hover:text-[#5B4B8A]'
         }`
       }
       aria-label={item.label}
@@ -103,17 +103,17 @@ export function AppShell({
   );
 
   return (
-    <div className="min-h-screen bg-sand-50 md:flex">
+    <div className="min-h-screen bg-gradient-to-br from-[#FAFAFF] via-white to-[#EDE7F6]/70 md:flex">
       {/* Desktop sidebar */}
-      <aside className="no-print sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-sand-200 bg-white px-4 py-5 md:flex">
+      <aside className="no-print sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-[#EDE7F6] bg-white/90 px-4 py-5 backdrop-blur-xl md:flex">
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/overview')}
           className="mb-8 flex items-center gap-3 rounded-xl px-2 py-2 text-left"
           aria-label="Go to overview"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100">
-            <Heart className="h-6 w-6 text-rose-600" fill="currentColor" />
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EDE7F6]">
+            <Heart className="h-6 w-6 text-[#5B4B8A]" fill="currentColor" />
           </span>
           <span>
             <span className="block text-[15px] font-bold tracking-tight text-stone-800">
@@ -128,7 +128,7 @@ export function AppShell({
         <button
           type="button"
           onClick={() => navigate('/journal/new')}
-          className="mb-7 flex w-full items-center justify-center gap-2 rounded-xl bg-plum-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-plum-700 hover:shadow-md"
+          className="mb-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-violet-900/10 transition-all duration-200 hover:bg-[#493B72] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#9B72CF] focus:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
           New check-in
@@ -145,7 +145,7 @@ export function AppShell({
           {NAV.map(item => navLink(item))}
         </nav>
 
-        <div className="mt-5 border-t border-sand-200 pt-4">
+        <div className="mt-5 border-t border-[#EDE7F6] pt-4">
           <button
             type="button"
             onClick={onToggleDiscreet}
@@ -169,12 +169,12 @@ export function AppShell({
             </span>
             <span
               className={`h-2 w-2 rounded-full ${
-                discreetMode ? 'bg-teal-500' : 'bg-stone-300'
+                discreetMode ? 'bg-[#9B72CF]' : 'bg-stone-300'
               }`}
             />
           </button>
 
-          <div className="mt-3 flex items-start gap-2 rounded-xl bg-teal-50 p-3">
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#EDE7F6]/70 p-3">
             <Leaf className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
             <p className="text-[11px] leading-relaxed text-stone-600">
               Your information stays in this browser. Nothing is uploaded to a
@@ -190,12 +190,12 @@ export function AppShell({
         <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-sand-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/overview')}
             className="flex min-w-0 items-center gap-2"
             aria-label="Go to overview"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100">
-              <Heart className="h-5 w-5 text-rose-600" fill="currentColor" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EDE7F6]">
+              <Heart className="h-5 w-5 text-[#5B4B8A]" fill="currentColor" />
             </span>
             <span className="truncate text-sm font-bold text-stone-800">
               {appName}
@@ -207,7 +207,7 @@ export function AppShell({
             <button
               type="button"
               onClick={() => navigate('/journal/new')}
-              className="rounded-xl bg-plum-600 p-2.5 text-white transition hover:bg-plum-700"
+              className="rounded-xl bg-[#5B4B8A] p-2.5 text-white transition hover:bg-[#493B72]"
               aria-label="New check-in"
             >
               <Plus className="h-4 w-4" />
@@ -251,17 +251,18 @@ export function AppShell({
         )}
 
         {/* Page header */}
-        <div className="no-print hidden items-center justify-between border-b border-sand-200/80 bg-sand-50/90 px-8 py-4 lg:flex">
+        <div className="no-print hidden items-center justify-between border-b border-[#EDE7F6] bg-white/65 px-8 py-4 backdrop-blur-xl lg:flex">
           <div>
             <p className="text-xs text-stone-400">
               HerHealth Companion <span className="mx-1">/</span>{' '}
               {NAV.find(item =>
-                item.to === '/'
-                  ? location.pathname === '/'
-                  : location.pathname.startsWith(item.to)
+              item.to === '/overview'
+              ? location.pathname === '/overview'
+              : location.pathname.startsWith(item.to)
               )?.label ?? 'Health space'}
             </p>
           </div>
+<<<<<<< HEAD
           <div className="flex items-center gap-2.5">
             <QuickEscapeButton />
             <button
@@ -286,6 +287,20 @@ export function AppShell({
               {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
             </button>
           </div>
+=======
+          <button
+            type="button"
+            onClick={onToggleDiscreet}
+            className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-2 text-xs font-medium text-stone-600 transition hover:border-[#9B72CF] hover:text-[#5B4B8A]"
+          >
+            {discreetMode ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+            {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
+          </button>
+>>>>>>> 8836c519b8675b886f9339a0c4b2cc43bbc6a054
         </div>
 
         <main className="page-enter mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 md:p-8 xl:px-10">

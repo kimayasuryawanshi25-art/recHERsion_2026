@@ -1,40 +1,49 @@
 
 @import "tailwindcss";
 
+/* Lavender Calm color palette */
 :root {
-  --color-rose-50: #fff4f3;
-  --color-rose-100: #fce7e5;
-  --color-rose-200: #f4ceca;
-  --color-rose-500: #c98288;
-  --color-rose-600: #b66c77;
+  --color-plum-50: #FAFAFF;
+  --color-plum-100: #EDE7F6;
+  --color-plum-200: #D9CBEF;
+  --color-plum-500: #9B72CF;
+  --color-plum-600: #5B4B8A;
+  --color-plum-700: #493B72;
 
-  --color-plum-50: #f6f2f7;
-  --color-plum-100: #ece4ef;
-  --color-plum-200: #d9c9df;
-  --color-plum-500: #92799a;
-  --color-plum-600: #7c6385;
-  --color-plum-700: #634b6c;
+  --color-teal-50: #EDE7F6;
+  --color-teal-100: #D9CBEF;
+  --color-teal-500: #9B72CF;
+  --color-teal-600: #5B4B8A;
 
-  --color-teal-50: #eff6f1;
-  --color-teal-100: #dce9df;
-  --color-teal-500: #789b83;
-  --color-teal-600: #5e806a;
+  --color-rose-50: #F3EEFA;
+  --color-rose-100: #EDE7F6;
+  --color-rose-200: #D9CBEF;
+  --color-rose-500: #9B72CF;
+  --color-rose-600: #5B4B8A;
 
-  --color-sand-50: #fbfaf7;
-  --color-sand-100: #f4f1e9;
-  --color-sand-200: #e9e3d8;
-  --color-sand-300: #d8cebf;
-  --color-sand-500: #a2947d;
-  --color-sand-700: #6b6255;
-  --color-sand-900: #342f2b;
+  --color-sand-50: #FAFAFF;
+  --color-sand-100: #F4F0FA;
+  --color-sand-200: #E5DDEF;
+  --color-sand-300: #D3C7E3;
+  --color-sand-500: #81778F;
+  --color-sand-700: #514960;
+  --color-sand-900: #343047;
 
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+
+  --app-bg: #FAFAFF;
+  --app-text: #343047;
+  --app-border: #EDE7F6;
+  --app-primary: #5B4B8A;
+  --app-accent: #9B72CF;
 }
 
+/* Base styles */
 :root {
   font-family: var(--font-sans);
-  color: #37332f;
-  background: #fbfaf7;
+  color: var(--app-text);
+  background: var(--app-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -47,13 +56,16 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 24px;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #fbfaf7;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgb(237 231 246 / 65%), transparent 42%),
+    linear-gradient(135deg, #FAFAFF 0%, #FFFFFF 55%, #F4F0FA 100%);
 }
 
 button,
@@ -73,27 +85,56 @@ button:disabled {
 }
 
 *:focus-visible {
-  outline: 2px solid #92799a;
+  outline: 2px solid var(--app-accent);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: #ece4ef;
-  color: #634b6c;
+  background: #EDE7F6;
+  color: #493B72;
 }
 
+/* Standard solid cards */
 .app-card {
-  background: #fff;
-  border: 1px solid #eee9e1;
+  background: #FFFFFF;
+  border: 1px solid var(--app-border);
   border-radius: 20px;
-  box-shadow: 0 3px 14px rgb(52 47 43 / 3%);
-  transition: box-shadow 180ms ease, transform 180ms ease;
+  box-shadow: 0 3px 14px rgb(52 48 71 / 4%);
+  transition:
+    box-shadow 220ms ease,
+    transform 220ms ease,
+    border-color 220ms ease;
 }
 
 .app-card:hover {
-  box-shadow: 0 8px 24px rgb(52 47 43 / 6%);
+  box-shadow: 0 8px 24px rgb(52 48 71 / 7%);
 }
 
+/* Glass panels: use selectively on larger panels */
+.glass-card {
+  background: rgb(255 255 255 / 75%);
+  border: 1px solid rgb(255 255 255 / 85%);
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgb(91 75 138 / 7%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Interactive cards */
+.interactive-card {
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.interactive-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgb(91 75 138 / 10%);
+  border-color: #D9CBEF;
+}
+
+/* Page transitions */
 .page-enter {
   animation: page-enter 350ms ease both;
 }
@@ -109,6 +150,63 @@ button:disabled {
   }
 }
 
+/* Scroll reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 650ms ease,
+    transform 650ms cubic-bezier(0.2, 0.65, 0.3, 1);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Decorative background movement */
+@keyframes gradient-drift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(16px, -18px, 0) scale(1.06);
+  }
+}
+
+.gradient-drift {
+  animation: gradient-drift 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Floating decorative elements */
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+.gentle-float {
+  animation: gentle-float 5s ease-in-out infinite;
+}
+
+@keyframes card-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.card-float {
+  animation: card-float 6s ease-in-out infinite;
+}
+
+/* Accessibility: respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -118,19 +216,35 @@ button:disabled {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .scroll-reveal,
+  .scroll-reveal.is-visible,
+  .interactive-card:hover,
+  .gentle-float,
+  .gradient-drift,
+  .card-float {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
+/* Print-friendly pages */
 @media print {
   .no-print {
     display: none !important;
   }
 
   body {
-    background: white;
+    background: #FFFFFF;
   }
 
-  .app-card {
+  .app-card,
+  .glass-card {
+    background: #FFFFFF;
     box-shadow: none;
-    border: 1px solid #ddd;
+    border: 1px solid #DDDDDD;
+    backdrop-filter: none;
   }
 }

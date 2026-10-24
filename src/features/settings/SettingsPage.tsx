@@ -336,7 +336,7 @@ export function SettingsPage() {
 
       <section className="app-card p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EDE7F6] text-[#5B4B8A]">
             <Eye className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -625,7 +625,7 @@ export function SettingsPage() {
 
       <section className="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-rose-600">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#5B4B8A]">
             <Trash2 className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -638,7 +638,7 @@ export function SettingsPage() {
               type="button"
               onClick={eraseLocalData}
               disabled={busy}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-[#EDE7F6] disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" />
               Delete all local data
