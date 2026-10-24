@@ -1,6 +1,6 @@
 # HerHealth Companion 🌸
 
-> **A privacy-first, non-diagnostic women's health organizer built for recHERsion '26.**  
+
 > *"Turn scattered health records into a clear, empowering story you can take to your doctor — without algorithms diagnosing you, estimating risk scores, predicting diseases, or leaking personal data."*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%20%7C%20Strict-blue)](https://www.typescriptlang.org/)
