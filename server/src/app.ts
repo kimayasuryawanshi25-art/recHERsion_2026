@@ -8,6 +8,7 @@ import { profileRoutes } from './routes/profile.routes.js';
 import { moduleRoutes } from './routes/modules.routes.js';
 import { entriesRoutes } from './routes/entries.routes.js';
 import { clinicalRoutes } from './routes/clinical.routes.js';
+import { observationsRoutes } from './routes/observations.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -28,6 +29,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(moduleRoutes, { prefix: '/api/v1' });
   await app.register(entriesRoutes, { prefix: '/api/v1' });
   await app.register(clinicalRoutes, { prefix: '/api/v1' });
+  await app.register(observationsRoutes, { prefix: '/api/v1' });
 
   return app;
 }

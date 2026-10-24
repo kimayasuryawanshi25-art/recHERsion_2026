@@ -153,3 +153,14 @@ export const shareTokens = sqliteTable('share_tokens', {
   revokedAt: text('revoked_at'),
   createdAt: text('created_at').notNull(),
 });
+
+export const rulesRegistry = sqliteTable('rules_registry', {
+  ruleId: text('rule_id').primaryKey(),
+  version: text('version').notNull(),
+  status: text('status').notNull(), // 'live' | 'draft' | 'disabled'
+  title: text('title').notNull(),
+  minEntries: integer('min_entries').notNull(),
+  requiredInputs: text('required_inputs').notNull().default('[]'),
+  updatedAt: text('updated_at').notNull(),
+});
+

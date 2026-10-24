@@ -163,5 +163,34 @@ export async function initDatabase(): Promise<void> {
       revoked_at TEXT,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS rules_registry (
+      rule_id TEXT PRIMARY KEY,
+      version TEXT NOT NULL,
+      status TEXT NOT NULL,
+      title TEXT NOT NULL,
+      min_entries INTEGER NOT NULL,
+      required_inputs TEXT NOT NULL DEFAULT '[]',
+      updated_at TEXT NOT NULL
+    );
   `);
+
+  // Seed rules registry from shared registry if not present
+  const { RULE_REGISTRY } = await import('@rechersion/shared');
+  const now = new Date().toISOString();
+  for (const rule of RULE_REGISTRY) {
+    await client.execute({
+      sql: `INSERT OR REPLACE INTO rules_registry (rule_id, version, status, title, min_entries, required_inputs, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      args: [
+        rule.ruleId,
+        rule.version,
+        rule.status,
+        rule.title,
+        rule.minEntries,
+        JSON.stringify(rule.requiredInputs),
+        now,
+      ],
+    });
+  }
 }
