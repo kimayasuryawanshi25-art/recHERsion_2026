@@ -110,13 +110,13 @@ export function CareFinderPage() {
   const getCostLabel = (cost: string) => {
     switch (cost) {
       case 'bulk_billing':
-        return 'Bulk-Billed (Medicare)';
+        return 'Public / Ayushman Bharat (No Gap)';
       case 'free_public':
-        return 'Free Public Hospital';
+        return 'Free Public Hospital / Casualty';
       case 'mixed_billing':
-        return 'Mixed Billing';
+        return 'Standard Consultation Fee';
       case 'private':
-        return 'Private Fee';
+        return 'Private Clinic Fee';
       default:
         return cost;
     }
@@ -125,15 +125,15 @@ export function CareFinderPage() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'hospital_ed':
-        return 'Emergency Department (24/7)';
+        return 'Emergency / Casualty (24/7)';
       case 'urgent_care':
-        return 'Medicare Urgent Care Clinic';
+        return 'Urban Primary Health Centre (UPHC)';
       case 'womens_health_clinic':
-        return 'Women’s Health Centre';
+        return 'Women’s Hospital & Maternity';
       case 'sexual_health_clinic':
-        return 'Sexual Health Clinic';
+        return 'Family Planning & Reproductive Health';
       case 'gp':
-        return 'General Practice';
+        return 'General Practice & Clinic';
       case 'maternity_service':
         return 'Maternity & Early Pregnancy Service';
       case 'pharmacy':
@@ -147,8 +147,17 @@ export function CareFinderPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
         title="Care Finder & Support Directory"
-        description="Verified local care providers, urgent clinics, crisis helplines, and emergency alerts."
+        description="Verified local care providers, urgent clinics, and Indian emergency crisis helplines (Demonstration Purpose)."
       />
+
+      {/* Demo Purpose Notice Banner */}
+      <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900 shadow-sm flex items-start gap-3">
+        <span className="text-base shrink-0">ℹ️</span>
+        <div className="leading-relaxed">
+          <span className="font-bold">Demonstration Purpose Notice: </span>
+          The emergency numbers and healthcare clinics displayed below represent official Indian emergency services (National Emergency 112, Women in Distress Helpline 181, Tele-MANAS 14416) and public hospitals for demonstration and evaluation purposes during the hackathon. In an actual medical emergency, dial 112 immediately or visit your nearest emergency casualty department.
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2 rounded-2xl bg-sand-200/70 p-1">
@@ -377,7 +386,7 @@ export function CareFinderPage() {
       ) : (
         /* Emergency & Helplines View */
         <div className="space-y-6">
-          {/* Triple Zero Emergency Banner */}
+          {/* National Emergency Banner */}
           <div className="rounded-3xl border border-rose-300 bg-rose-50/90 p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -385,20 +394,34 @@ export function CareFinderPage() {
                   <AlertOctagon className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-rose-950">National Emergency Services</h3>
-                  <p className="mt-0.5 text-xs text-rose-800 leading-relaxed max-w-xl">
-                    For life-threatening emergencies, acute shortness of breath, severe uncontrolled bleeding, or unbearable sudden pain, call immediately or attend your nearest emergency department.
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-rose-950">National Emergency Services (India)</h3>
+                    <span className="rounded-full bg-rose-200/80 px-2.5 py-0.5 text-[10px] font-bold text-rose-900 uppercase">
+                      Demo Purpose
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-rose-800 leading-relaxed max-w-xl">
+                    For life-threatening emergencies, acute shortness of breath, severe uncontrolled bleeding, trauma, or women in distress, call 112 (National Emergency Helpline) or 181 across India (Demo Purpose).
                   </p>
                 </div>
               </div>
 
-              <a
-                href="tel:000"
-                className="inline-flex items-center gap-2 rounded-2xl bg-rose-700 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-rose-900/20 transition hover:bg-rose-800 shrink-0"
-              >
-                <Phone className="h-5 w-5" />
-                Call 000 Now
-              </a>
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
+                <a
+                  href="tel:112"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-rose-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-900/20 transition hover:bg-rose-800"
+                >
+                  <Phone className="h-4 w-4" />
+                  Call 112 Now
+                </a>
+                <a
+                  href="tel:181"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-rose-100 border border-rose-300 px-4 py-3 text-sm font-bold text-rose-900 transition hover:bg-rose-200"
+                >
+                  <Phone className="h-4 w-4 text-rose-700" />
+                  Call 181 (Women Helpline)
+                </a>
+              </div>
             </div>
           </div>
 
