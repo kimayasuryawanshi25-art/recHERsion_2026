@@ -4,3 +4,4 @@ export * from './transition.js';
 export * from './profile.js';
 export * from './navigator.js';
 export * from './finder.js';
+export * from './appointment.js';

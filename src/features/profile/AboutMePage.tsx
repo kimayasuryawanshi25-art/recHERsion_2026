@@ -73,6 +73,8 @@ export function AboutMePage() {
     reason: '',
     prescriber: '',
     status: 'active' as const,
+    refillRemainingCount: '' as string | number,
+    refillReminderDate: '',
     includeInSummary: true,
   });
 
@@ -182,6 +184,8 @@ export function AboutMePage() {
       reason: newMedicine.reason.trim() || null,
       prescriber: newMedicine.prescriber.trim() || null,
       status: newMedicine.status,
+      refillRemainingCount: newMedicine.refillRemainingCount !== '' ? Number(newMedicine.refillRemainingCount) : null,
+      refillReminderDate: newMedicine.refillReminderDate || null,
       includeInSummary: newMedicine.includeInSummary,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -189,7 +193,7 @@ export function AboutMePage() {
     await saveMedicineEvent(record);
     setMedicines(prev => [...prev, record]);
     setShowAddMedicine(false);
-    setNewMedicine({ name: '', dose: '', frequency: '', startDate: '', stopDate: '', reason: '', prescriber: '', status: 'active', includeInSummary: true });
+    setNewMedicine({ name: '', dose: '', frequency: '', startDate: '', stopDate: '', reason: '', prescriber: '', status: 'active', refillRemainingCount: '', refillReminderDate: '', includeInSummary: true });
     notify('Medicine saved.');
   };
 
@@ -661,6 +665,21 @@ export function AboutMePage() {
                         {m.status}
                       </span>
                       {m.startDate && <p className="text-stone-400 text-[11px] mt-0.5">Started: {m.startDate}</p>}
+                      {m.refillRemainingCount !== null && m.refillRemainingCount !== undefined && (
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            m.refillRemainingCount <= 2 ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-sand-100 text-stone-600'
+                          }`}>
+                            Refills left: {m.refillRemainingCount}
+                            {m.refillRemainingCount <= 2 && ' (Low)'}
+                          </span>
+                          {m.refillReminderDate && (
+                            <span className="text-[10px] text-stone-500">
+                              Reminder: {m.refillReminderDate}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <label className="flex items-center gap-1.5 cursor-pointer text-stone-500">
@@ -730,6 +749,28 @@ export function AboutMePage() {
                       <option value="discontinued">Discontinued (Stopped)</option>
                       <option value="unknown">Unsure</option>
                     </select>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-stone-700 mb-1">Refills Remaining (Optional)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newMedicine.refillRemainingCount}
+                      onChange={e => setNewMedicine({ ...newMedicine, refillRemainingCount: e.target.value })}
+                      placeholder="e.g. 2"
+                      className="w-full rounded-lg border border-sand-300 bg-white p-2 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-stone-700 mb-1">Refill Reminder Date (Optional)</label>
+                    <input
+                      type="date"
+                      value={newMedicine.refillReminderDate}
+                      onChange={e => setNewMedicine({ ...newMedicine, refillReminderDate: e.target.value })}
+                      className="w-full rounded-lg border border-sand-300 bg-white p-2 text-xs"
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">

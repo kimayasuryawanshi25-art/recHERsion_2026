@@ -298,6 +298,34 @@ class ApiClient {
       return this.request(`/finder/providers${qs ? `?${qs}` : ''}`);
     },
   };
+
+  // --- Appointment Debriefs & Follow-up Tasks ---
+  debriefs = {
+    list: async () => this.request('/debriefs'),
+    create: async (data: any) =>
+      this.request('/debriefs', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    tasks: async (completed?: boolean) => {
+      const q = completed !== undefined ? `?completed=${completed}` : '';
+      return this.request(`/debriefs/tasks${q}`);
+    },
+    createTask: async (data: any) =>
+      this.request('/debriefs/tasks', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    updateTask: async (id: string, data: any) =>
+      this.request(`/debriefs/tasks/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    deleteTask: async (id: string) =>
+      this.request(`/debriefs/tasks/${id}`, {
+        method: 'DELETE',
+      }),
+  };
 }
 
 export const api = new ApiClient();

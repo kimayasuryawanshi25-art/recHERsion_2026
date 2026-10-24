@@ -231,6 +231,40 @@ export async function initDatabase(): Promise<void> {
       deleted_at TEXT,
       client_updated_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS appointment_debriefs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      appointment_id TEXT,
+      summary_id TEXT,
+      doctor_name TEXT,
+      clinic TEXT,
+      visit_date TEXT NOT NULL,
+      discussed_topics_encrypted TEXT,
+      tests_ordered_encrypted TEXT,
+      prescriptions_changed_encrypted TEXT,
+      notes_encrypted TEXT,
+      followup_date TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      client_updated_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS followup_tasks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      debrief_id TEXT,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'test',
+      due_date TEXT,
+      completed INTEGER NOT NULL DEFAULT 0,
+      notes_encrypted TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      client_updated_at TEXT
+    );
   `);
 
   // Migrate existing tables if needed
@@ -249,6 +283,9 @@ export async function initDatabase(): Promise<void> {
     'prescriber TEXT',
     "status TEXT NOT NULL DEFAULT 'active'",
     'include_in_summary INTEGER NOT NULL DEFAULT 1',
+    'refill_remaining_count INTEGER',
+    'refill_reminder_date TEXT',
+    'daily_times TEXT',
   ];
   for (const col of medCols) {
     try {

@@ -2,7 +2,7 @@ import { openDB, type IDBPDatabase } from 'idb';
 import type { SymptomEntry, UserSettings, ConsultationSummary, ExportData } from '../../types/health';
 
 const DB_NAME = 'herhealth-companion';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export interface OutboxItem {
   id: string;
@@ -15,7 +15,9 @@ export interface OutboxItem {
     | 'health_item'
     | 'life_event'
     | 'care_team'
-    | 'medicine_event';
+    | 'medicine_event'
+    | 'appointment_debrief'
+    | 'followup_task';
   action: 'upsert' | 'delete';
   recordId: string;
   clientUpdatedAt: string;
@@ -61,6 +63,14 @@ export function getDB(): Promise<IDBPDatabase> {
           }
           if (!db.objectStoreNames.contains('medicineEvents')) {
             db.createObjectStore('medicineEvents', { keyPath: 'id' });
+          }
+        }
+        if (oldVersion < 4) {
+          if (!db.objectStoreNames.contains('appointmentDebriefs')) {
+            db.createObjectStore('appointmentDebriefs', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('followupTasks')) {
+            db.createObjectStore('followupTasks', { keyPath: 'id' });
           }
         }
       },
@@ -354,6 +364,71 @@ export async function deleteMedicineEvent(id: string): Promise<void> {
   });
 }
 
+// Appointment Debriefs
+export async function getAppointmentDebriefs(): Promise<any[]> {
+  const db = await getDB();
+  return db.getAll('appointmentDebriefs');
+}
+
+export async function getAppointmentDebrief(id: string): Promise<any | undefined> {
+  const db = await getDB();
+  return db.get('appointmentDebriefs', id);
+}
+
+export async function saveAppointmentDebrief(debrief: any): Promise<void> {
+  const db = await getDB();
+  const now = new Date().toISOString();
+  const record = { ...debrief, updatedAt: debrief.updatedAt || now, createdAt: debrief.createdAt || now };
+  await db.put('appointmentDebriefs', record);
+  await queueOutbox({
+    type: 'appointment_debrief',
+    action: 'upsert',
+    recordId: debrief.id,
+    clientUpdatedAt: now,
+    data: record,
+  });
+}
+
+// Follow-up Tasks
+export async function getFollowupTasks(debriefId?: string): Promise<any[]> {
+  const db = await getDB();
+  const tasks = await db.getAll('followupTasks');
+  if (debriefId) {
+    return tasks.filter((t: any) => t.debriefId === debriefId && !t.deletedAt);
+  }
+  return tasks.filter((t: any) => !t.deletedAt);
+}
+
+export async function saveFollowupTask(task: any): Promise<void> {
+  const db = await getDB();
+  const now = new Date().toISOString();
+  const record = { ...task, updatedAt: now, createdAt: task.createdAt || now };
+  await db.put('followupTasks', record);
+  await queueOutbox({
+    type: 'followup_task',
+    action: 'upsert',
+    recordId: task.id,
+    clientUpdatedAt: now,
+    data: record,
+  });
+}
+
+export async function deleteFollowupTask(id: string): Promise<void> {
+  const db = await getDB();
+  const task = await db.get('followupTasks', id);
+  const now = new Date().toISOString();
+  if (task) {
+    task.deletedAt = now;
+    await db.put('followupTasks', task);
+  }
+  await queueOutbox({
+    type: 'followup_task',
+    action: 'delete',
+    recordId: id,
+    clientUpdatedAt: now,
+  });
+}
+
 // Bulk operations
 export async function deleteAllData(): Promise<void> {
   const db = await getDB();
@@ -365,6 +440,8 @@ export async function deleteAllData(): Promise<void> {
   await db.clear('lifeEvents');
   await db.clear('careTeam');
   await db.clear('medicineEvents');
+  await db.clear('appointmentDebriefs');
+  await db.clear('followupTasks');
   await db.clear('outbox');
   await db.clear('syncMeta');
 }
@@ -378,6 +455,8 @@ export async function exportAllData(): Promise<ExportData> {
   const lifeEvents = await getLifeEvents();
   const careTeam = await getCareTeam();
   const medicineEvents = await getMedicineEvents();
+  const appointmentDebriefs = await getAppointmentDebriefs();
+  const followupTasks = await getFollowupTasks();
 
   return {
     schemaVersion: '1.0.0',
@@ -391,7 +470,9 @@ export async function exportAllData(): Promise<ExportData> {
     lifeEvents,
     careTeam,
     medicineEvents,
-  };
+    appointmentDebriefs,
+    followupTasks,
+  } as any;
 }
 
 export async function importData(

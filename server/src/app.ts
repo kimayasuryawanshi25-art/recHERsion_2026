@@ -18,6 +18,7 @@ import { shareRoutes } from './routes/share.routes.js';
 import { aiRoutes } from './routes/ai.routes.js';
 import { navigatorRoutes } from './routes/navigator.routes.js';
 import { finderRoutes } from './routes/finder.routes.js';
+import { debriefRoutes } from './routes/debrief.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -47,6 +48,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(aiRoutes, { prefix: '/api/v1/ai' });
   await app.register(navigatorRoutes, { prefix: '/api/v1/navigator' });
   await app.register(finderRoutes, { prefix: '/api/v1/finder' });
+  await app.register(debriefRoutes, { prefix: '/api/v1/debriefs' });
 
   return app;
 }

@@ -1,8 +1,35 @@
 import { useState, useEffect, useRef } from 'react';
-import { FileText, ChevronRight, ChevronLeft, Printer, Copy, Check, Share2 } from 'lucide-react';
+import {
+  FileText,
+  ChevronRight,
+  ChevronLeft,
+  Printer,
+  Copy,
+  Check,
+  Share2,
+  CheckSquare,
+  Square,
+  Calendar,
+  User,
+  Plus,
+  Trash2,
+  QrCode,
+  Stethoscope,
+  ListTodo,
+  ArrowRight,
+  Clock,
+} from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { getAllEntries, saveConsultation } from '../../lib/db';
-import { type SymptomEntry, type ConsultationSummary, getEntryDate } from '../../types/health';
+import {
+  getAllEntries,
+  saveConsultation,
+  getAppointmentDebriefs,
+  saveAppointmentDebrief,
+  getFollowupTasks,
+  saveFollowupTask,
+  deleteFollowupTask,
+} from '../../lib/db';
+import { type SymptomEntry, getEntryDate } from '../../types/health';
 import { v4 as uuidv4 } from 'uuid';
 import { ShareDialog } from './ShareDialog';
 import { api } from '../../lib/api';
@@ -13,10 +40,13 @@ const QUESTIONS = [
   { key: 'firstNoticed', label: 'When did you first notice the change?', placeholder: 'Approximate date or time period...' },
   { key: 'dailyImpact', label: 'How has it affected your daily activities?', placeholder: 'Impact on work, sleep, social life, exercise...' },
   { key: 'relevantRecords', label: 'Any relevant medicines, appointments, or records?', placeholder: 'Current medications, recent tests, upcoming appointments...' },
-  { key: 'questionsForDoctor', label: 'What questions would you like to ask your healthcare professional?', placeholder: 'List any questions you\'d like answered...' },
+  { key: 'questionsForDoctor', label: 'What questions would you like to ask your healthcare professional?', placeholder: 'List any questions you would like answered...' },
 ];
 
 export function ConsultationPage() {
+  const [activeStage, setActiveStage] = useState<'prepare' | 'in_visit' | 'debrief'>('prepare');
+
+  // Stage 1 (Prepare) State
   const [step, setStep] = useState(0); // 0 = intro, 1-6 = questions, 7 = review, 8 = summary
   const [entries, setEntries] = useState<SymptomEntry[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -26,12 +56,64 @@ export function ConsultationPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Stage 2 (During Visit) State
+  const [checklist, setChecklist] = useState<{ id: string; text: string; done: boolean }[]>([]);
+  const [inVisitNotes, setInVisitNotes] = useState('');
+  const [showQrModal, setShowQrModal] = useState(false);
+
+  // Stage 3 (Debrief & Tasks) State
+  const [debriefs, setDebriefs] = useState<any[]>([]);
+  const [followupTasks, setFollowupTasks] = useState<any[]>([]);
+  const [debriefForm, setDebriefForm] = useState({
+    clinicianName: '',
+    visitDate: new Date().toISOString().slice(0, 10),
+    clinicalDiscussion: '',
+    testsOrdered: '',
+    prescriptionChanges: '',
+    followupDate: '',
+  });
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [savingDebrief, setSavingDebrief] = useState(false);
+  const [saveDebriefSuccess, setSaveDebriefSuccess] = useState(false);
+
+  // Load initial data
   useEffect(() => {
     (async () => {
       const e = await getAllEntries();
       setEntries(e.sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a))));
+
+      // Load debriefs
+      try {
+        const localDebriefs = await getAppointmentDebriefs();
+        setDebriefs(localDebriefs || []);
+      } catch (err) {
+        console.warn('Failed to load local debriefs:', err);
+      }
+
+      // Load tasks
+      try {
+        const localTasks = await getFollowupTasks();
+        setFollowupTasks(localTasks || []);
+      } catch (err) {
+        console.warn('Failed to load local tasks:', err);
+      }
     })();
   }, []);
+
+  // Sync questions to in-visit checklist when questionsForDoctor changes
+  useEffect(() => {
+    if (answers.questionsForDoctor && answers.questionsForDoctor.trim().length > 0) {
+      const parsed = answers.questionsForDoctor
+        .split('\n')
+        .map(q => q.replace(/^[-*•0-9.)\s]+/, '').trim())
+        .filter(q => q.length > 0)
+        .map((text, idx) => ({ id: `q-${idx}`, text, done: false }));
+      if (parsed.length > 0) {
+        setChecklist(parsed);
+      }
+    }
+  }, [answers.questionsForDoctor]);
 
   const generateSummary = () => {
     const lines: string[] = [];
@@ -41,7 +123,8 @@ export function ConsultationPage() {
     lines.push(`  Date: ${new Date().toLocaleDateString()}`);
     lines.push('═══════════════════════════════════════');
     lines.push('');
-    lines.push('⚕ This is user-provided information, not a diagnosis or medical assessment.');
+    lines.push('This is user-provided self-reported information, not a clinical assessment.');
+    lines.push('If you are worried, speak to a health professional.');
     lines.push('');
 
     if (answers.whatChanged) {
@@ -60,7 +143,6 @@ export function ConsultationPage() {
       lines.push('');
     }
 
-    // Add recorded symptom data
     if (entries.length > 0) {
       const recent = entries.slice(0, 20);
       const dates = recent.map(e => getEntryDate(e)).filter(Boolean);
@@ -89,53 +171,42 @@ export function ConsultationPage() {
       lines.push('');
     }
 
-    // Wellbeing summary from entries
     const poorSleep = entries.filter(e => e.sleepQuality && e.sleepQuality <= 2).length;
     const lowMood = entries.filter(e => e.mood && e.mood <= 2).length;
     if (poorSleep > 0 || lowMood > 0) {
       lines.push('WELLBEING NOTES');
-      if (poorSleep > 0) lines.push(`  • Poor/very poor sleep recorded in ${poorSleep} check-in${poorSleep === 1 ? '' : 's'}`);
-      if (lowMood > 0) lines.push(`  • Low/very low mood recorded in ${lowMood} check-in${lowMood === 1 ? '' : 's'}`);
+      if (poorSleep > 0) lines.push(`  • Poor sleep recorded in ${poorSleep} check-ins`);
+      if (lowMood > 0) lines.push(`  • Low mood recorded in ${lowMood} check-ins`);
       lines.push('');
     }
 
     if (answers.relevantRecords) {
-      lines.push('RELEVANT MEDICINES/RECORDS');
+      lines.push('RELEVANT MEDICINES & RECORDS');
       lines.push(answers.relevantRecords);
       lines.push('');
     }
+
     if (answers.questionsForDoctor) {
-      lines.push('QUESTIONS FOR MY HEALTHCARE PROFESSIONAL');
+      lines.push('QUESTIONS TO ASK');
       lines.push(answers.questionsForDoctor);
       lines.push('');
     }
 
-    lines.push('─────────────────────────────────────');
-    lines.push('Note: This summary contains self-reported information.');
-    lines.push('Missing information may need to be discussed with your provider.');
-
+    lines.push('═══════════════════════════════════════');
+    lines.push('Note: For discussion only. Please verify directly with the individual.');
     return lines.join('\n');
   };
 
-  const goToSummary = () => {
+  const goToSummary = async () => {
     const text = generateSummary();
     setSummaryText(text);
-    setStep(8);
-    // Save
+
+    const summaryId = uuidv4();
+    setCurrentSummaryId(summaryId);
     const now = new Date().toISOString();
-    const sumId = uuidv4();
-    setCurrentSummaryId(sumId);
 
-    const c: ConsultationSummary = {
-      id: sumId, ...answers as any,
-      selectedEntryIds: entries.slice(0, 20).map(e => e.id),
-      generatedText: text, editedText: text,
-      createdAt: now, updatedAt: now,
-    };
-    saveConsultation(c);
-
-    // If online & logged in, also sync summary to backend
-    api.summaries.interview({
+    const summaryRecord = {
+      id: summaryId,
       whatChanged: answers.whatChanged || '',
       mainConcerns: answers.mainConcerns || '',
       firstNoticed: answers.firstNoticed || '',
@@ -143,146 +214,793 @@ export function ConsultationPage() {
       relevantRecords: answers.relevantRecords || '',
       questionsForDoctor: answers.questionsForDoctor || '',
       selectedEntryIds: entries.slice(0, 20).map(e => e.id),
-    }).then(res => {
-      if (res && res.id) setCurrentSummaryId(res.id);
-    }).catch(() => {});
+      generatedText: text,
+      editedText: text,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await saveConsultation(summaryRecord);
+
+    try {
+      await api.summaries.interview({
+        whatChanged: answers.whatChanged || '',
+        mainConcerns: answers.mainConcerns || '',
+        firstNoticed: answers.firstNoticed || '',
+        dailyImpact: answers.dailyImpact || '',
+        relevantRecords: answers.relevantRecords || '',
+        questionsForDoctor: answers.questionsForDoctor || '',
+      });
+    } catch {
+      // Offline fallback
+    }
+
+    setStep(8);
   };
 
-  const handlePrint = () => window.print();
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(summaryText);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(summaryText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Intro
-  if (step === 0) return (
-    <div>
-      <PageHeader title="Appointment Preparation" description="Prepare a summary for your next healthcare visit" />
-      <div className="bg-white border border-sand-200 rounded-2xl p-8 max-w-2xl">
-        <FileText className="w-12 h-12 text-plum-400 mb-4" />
-        <h2 className="text-xl font-bold text-gray-800 mb-3">Prepare for Your Appointment</h2>
-        <p className="text-gray-600 mb-6">Answer 6 short questions and we'll combine your answers with your recorded check-ins to create an editable summary you can take to your appointment.</p>
-        <ul className="space-y-2 mb-6 text-sm text-gray-500">
-          <li>• You can skip any question</li>
-          <li>• The summary is editable before printing</li>
-          <li>• Your data stays on your device</li>
-          <li>• This is not a diagnosis — it's your own information organized for discussion</li>
-        </ul>
-        <p className="text-xs text-gray-400 mb-6">You have {entries.length} check-in{entries.length === 1 ? '' : 's'} that may be included in the summary.</p>
-        <button onClick={() => setStep(1)} className="bg-plum-600 text-white rounded-xl px-6 py-3 font-medium hover:bg-plum-700 transition-colors flex items-center gap-2">
-          Start <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
+  const handlePrint = () => {
+    window.print();
+  };
 
-  // Questions 1-6
-  if (step >= 1 && step <= 6) {
-    const q = QUESTIONS[step - 1];
-    return (
-      <div>
-        <PageHeader title="Appointment Preparation" description={`Question ${step} of 6`} />
-        <div className="bg-white border border-sand-200 rounded-2xl p-8 max-w-2xl">
-          <div className="flex gap-1 mb-6">
-            {QUESTIONS.map((_, i) => (
-              <div key={i} className={`h-1.5 flex-1 rounded-full ${i < step ? 'bg-plum-500' : i === step - 1 ? 'bg-plum-300' : 'bg-sand-200'}`} />
-            ))}
+  const toggleChecklistItem = (id: string) => {
+    setChecklist(prev => prev.map(item => item.id === id ? { ...item, done: !item.done } : item));
+  };
+
+  const addChecklistItem = (text: string) => {
+    if (!text.trim()) return;
+    setChecklist(prev => [...prev, { id: `q-${Date.now()}`, text: text.trim(), done: false }]);
+  };
+
+  // Debrief & Task Handlers
+  const handleSaveDebrief = async () => {
+    setSavingDebrief(true);
+    try {
+      const id = `deb-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const payload = {
+        id,
+        clinicianName: debriefForm.clinicianName.trim() || undefined,
+        visitDate: debriefForm.visitDate,
+        clinicalDiscussion: debriefForm.clinicalDiscussion.trim() || undefined,
+        testsOrdered: debriefForm.testsOrdered.trim() || undefined,
+        prescriptionChanges: debriefForm.prescriptionChanges.trim() || undefined,
+        followupDate: debriefForm.followupDate.trim() || undefined,
+      };
+
+      await saveAppointmentDebrief(payload);
+
+      try {
+        await api.debriefs.create(payload);
+      } catch {
+        // Safe offline mode
+      }
+
+      setDebriefs(prev => [payload, ...prev]);
+      setSaveDebriefSuccess(true);
+      setTimeout(() => setSaveDebriefSuccess(false), 3000);
+
+      // Reset form
+      setDebriefForm({
+        clinicianName: '',
+        visitDate: new Date().toISOString().slice(0, 10),
+        clinicalDiscussion: '',
+        testsOrdered: '',
+        prescriptionChanges: '',
+        followupDate: '',
+      });
+    } catch (err) {
+      console.error('Failed to save debrief:', err);
+    } finally {
+      setSavingDebrief(false);
+    }
+  };
+
+  const handleAddTask = async () => {
+    if (!newTaskTitle.trim()) return;
+    const taskId = `task-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const taskRecord = {
+      id: taskId,
+      title: newTaskTitle.trim(),
+      dueDate: newTaskDueDate || undefined,
+      status: 'pending' as const,
+      createdAt: new Date().toISOString(),
+    };
+
+    await saveFollowupTask(taskRecord);
+    try {
+      await api.debriefs.createTask(taskRecord);
+    } catch {
+      // Offline fallback
+    }
+
+    setFollowupTasks(prev => [taskRecord, ...prev]);
+    setNewTaskTitle('');
+    setNewTaskDueDate('');
+  };
+
+  const handleToggleTaskStatus = async (task: any) => {
+    const updated = {
+      ...task,
+      status: task.status === 'completed' ? 'pending' : 'completed',
+      updatedAt: new Date().toISOString(),
+    };
+    await saveFollowupTask(updated);
+    try {
+      await api.debriefs.updateTask(task.id, { status: updated.status });
+    } catch {
+      // Offline fallback
+    }
+    setFollowupTasks(prev => prev.map(t => (t.id === task.id ? updated : t)));
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    await deleteFollowupTask(id);
+    try {
+      await api.debriefs.deleteTask(id);
+    } catch {
+      // Offline fallback
+    }
+    setFollowupTasks(prev => prev.filter(t => t.id !== id));
+  };
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+      {/* Stage Navigation Header */}
+      <div className="no-print rounded-2xl border border-sand-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-plum-600">3-Stage Appointment Care Loop</span>
+            <h2 className="text-lg font-bold text-stone-900">Appointment Management & Support</h2>
           </div>
 
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">{q.label}</h3>
-          <textarea
-            value={answers[q.key] || ''}
-            onChange={e => setAnswers(prev => ({ ...prev, [q.key]: e.target.value }))}
-            rows={4}
-            placeholder={q.placeholder}
-            className="w-full px-4 py-3 border border-sand-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-plum-300 resize-none mb-6"
-            aria-label={q.label}
-          />
-
-          <div className="flex justify-between">
-            <button onClick={() => setStep(step - 1)}
-              className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
-              <ChevronLeft className="w-4 h-4" /> Back
+          <div className="flex items-center gap-1.5 rounded-xl bg-sand-100 p-1 border border-sand-200">
+            <button
+              onClick={() => setActiveStage('prepare')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                activeStage === 'prepare'
+                  ? 'bg-white text-plum-700 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              1. Before Visit
             </button>
-            <div className="flex gap-3">
-              <button onClick={() => setStep(step + 1 > 6 ? 7 : step + 1)}
-                className="text-plum-600 hover:text-plum-700 text-sm font-medium">Skip</button>
-              <button onClick={() => setStep(step + 1 > 6 ? 7 : step + 1)}
-                className="bg-plum-600 text-white rounded-xl px-5 py-2 font-medium hover:bg-plum-700 transition-colors flex items-center gap-2 text-sm">
-                {step === 6 ? 'Review' : 'Next'} <ChevronRight className="w-4 h-4" />
+            <button
+              onClick={() => setActiveStage('in_visit')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                activeStage === 'in_visit'
+                  ? 'bg-plum-600 text-white shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Stethoscope className="h-3.5 w-3.5" />
+              2. During Visit
+            </button>
+            <button
+              onClick={() => setActiveStage('debrief')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                activeStage === 'debrief'
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <ListTodo className="h-3.5 w-3.5" />
+              3. After Visit (Debrief)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* STAGE 1: BEFORE VISIT (PREPARE)                             */}
+      {/* ============================================================ */}
+      {activeStage === 'prepare' && (
+        <div className="space-y-6">
+          {step === 0 && (
+            <div>
+              <PageHeader
+                title="Prepare for Your Appointment"
+                description="Organize your symptoms, concerns, and questions so you can make the most of your conversation with your doctor."
+              />
+              <div className="rounded-2xl border border-sand-200 bg-white p-6 sm:p-8 space-y-6 shadow-sm">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-sand-200 bg-sand-50/50 p-4">
+                    <span className="text-xs font-bold text-plum-600 uppercase">Step 1</span>
+                    <h3 className="font-semibold text-stone-900 text-sm mt-1">Answer 6 Questions</h3>
+                    <p className="text-xs text-stone-500 mt-1">Describe changes, timing, and daily impact.</p>
+                  </div>
+                  <div className="rounded-xl border border-sand-200 bg-sand-50/50 p-4">
+                    <span className="text-xs font-bold text-plum-600 uppercase">Step 2</span>
+                    <h3 className="font-semibold text-stone-900 text-sm mt-1">Automatic Summary</h3>
+                    <p className="text-xs text-stone-500 mt-1">Includes your recorded journal patterns and timeline.</p>
+                  </div>
+                  <div className="rounded-xl border border-sand-200 bg-sand-50/50 p-4">
+                    <span className="text-xs font-bold text-plum-600 uppercase">Step 3</span>
+                    <h3 className="font-semibold text-stone-900 text-sm mt-1">Bring to Appointment</h3>
+                    <p className="text-xs text-stone-500 mt-1">Print, save PDF, or create an expiring secure share link.</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-plum-50 border border-plum-200 p-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-plum-900 uppercase">Ready for your visit right now?</h4>
+                    <p className="text-xs text-plum-700 mt-0.5">
+                      Skip straight to the high-contrast in-visit question checklist and note-taking mode.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveStage('in_visit')}
+                    className="shrink-0 rounded-xl bg-plum-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-plum-700"
+                  >
+                    Open Visit Mode
+                  </button>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-plum-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-plum-700 transition"
+                  >
+                    Begin Preparation <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step >= 1 && step <= 6 && (
+            <div>
+              <PageHeader title="Appointment Preparation" description={`Question ${step} of 6`} />
+              <div className="bg-white border border-sand-200 rounded-2xl p-6 sm:p-8 space-y-6">
+                <div className="flex gap-1.5 mb-2">
+                  {QUESTIONS.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1.5 flex-1 rounded-full transition-all ${
+                        i < step ? 'bg-plum-500' : i === step - 1 ? 'bg-plum-300' : 'bg-sand-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <div>
+                  <h3 className="text-base font-semibold text-stone-800 mb-2">{QUESTIONS[step - 1].label}</h3>
+                  <textarea
+                    value={answers[QUESTIONS[step - 1].key] || ''}
+                    onChange={e => setAnswers(prev => ({ ...prev, [QUESTIONS[step - 1].key]: e.target.value }))}
+                    rows={4}
+                    placeholder={QUESTIONS[step - 1].placeholder}
+                    className="w-full px-4 py-3 border border-sand-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-plum-300 resize-none"
+                    aria-label={QUESTIONS[step - 1].label}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <button
+                    onClick={() => setStep(step - 1)}
+                    className="flex items-center gap-1.5 text-stone-500 hover:text-stone-800 text-sm font-medium"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Back
+                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setStep(step + 1 > 6 ? 7 : step + 1)}
+                      className="text-plum-600 hover:text-plum-700 text-sm font-medium px-2 py-1"
+                    >
+                      Skip
+                    </button>
+                    <button
+                      onClick={() => setStep(step + 1 > 6 ? 7 : step + 1)}
+                      className="bg-plum-600 text-white rounded-xl px-5 py-2 font-medium hover:bg-plum-700 transition flex items-center gap-1.5 text-sm"
+                    >
+                      {step === 6 ? 'Review' : 'Next'} <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 7 && (
+            <div>
+              <PageHeader title="Appointment Preparation" description="Review your answers before generating your summary." />
+              <div className="bg-white border border-sand-200 rounded-2xl p-6 sm:p-8 space-y-4">
+                {QUESTIONS.map(q => (
+                  <div key={q.key} className="rounded-xl border border-sand-100 bg-sand-50/30 p-3.5">
+                    <h4 className="text-xs font-semibold text-stone-600 uppercase tracking-wider">{q.label}</h4>
+                    <p className="text-sm text-stone-800 mt-1 whitespace-pre-line">
+                      {answers[q.key] || <em className="text-stone-400">Not recorded</em>}
+                    </p>
+                  </div>
+                ))}
+                <div className="flex justify-between items-center pt-4 border-t border-sand-200">
+                  <button
+                    onClick={() => setStep(6)}
+                    className="flex items-center gap-1.5 text-stone-500 hover:text-stone-800 text-sm font-medium"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Edit Answers
+                  </button>
+                  <button
+                    onClick={goToSummary}
+                    className="bg-plum-600 text-white rounded-xl px-6 py-2.5 font-medium hover:bg-plum-700 transition text-sm"
+                  >
+                    Generate Summary
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 8 && (
+            <div>
+              <PageHeader title="Your Appointment Summary" description="Review, print, or share securely." />
+
+              <div className="flex flex-wrap gap-2.5 mb-4 no-print">
+                <button
+                  onClick={handleCopy}
+                  className="inline-flex items-center gap-1.5 bg-white border border-sand-200 rounded-xl px-3.5 py-2 text-xs font-medium text-stone-700 hover:bg-sand-50 transition"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-teal-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+                <button
+                  onClick={() => setShareDialogOpen(true)}
+                  className="inline-flex items-center gap-1.5 bg-white border border-sand-200 rounded-xl px-3.5 py-2 text-xs text-plum-700 hover:bg-plum-50 transition font-medium"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-plum-600" /> Share Link
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-1.5 bg-plum-600 text-white rounded-xl px-4 py-2 text-xs font-semibold hover:bg-plum-700 transition"
+                >
+                  <Printer className="w-3.5 h-3.5" /> Print / Save PDF
+                </button>
+                <button
+                  onClick={() => setActiveStage('in_visit')}
+                  className="inline-flex items-center gap-1.5 bg-teal-600 text-white rounded-xl px-4 py-2 text-xs font-semibold hover:bg-teal-700 transition ml-auto"
+                >
+                  <Stethoscope className="w-3.5 h-3.5" /> Go to Visit Mode
+                </button>
+              </div>
+
+              <div ref={printRef} className="bg-white border border-sand-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <textarea
+                  value={summaryText}
+                  onChange={e => setSummaryText(e.target.value)}
+                  rows={Math.max(16, summaryText.split('\n').length + 2)}
+                  className="w-full font-mono text-xs sm:text-sm text-stone-800 outline-none resize-none leading-relaxed border-none p-0 bg-transparent"
+                  aria-label="Editable appointment summary"
+                />
+              </div>
+
+              <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3.5 no-print text-xs text-amber-900">
+                <strong>Important:</strong> This summary organizes your self-reported observations. If you are worried, speak to a health professional.
+              </div>
+
+              <ShareDialog
+                isOpen={shareDialogOpen}
+                onClose={() => setShareDialogOpen(false)}
+                summaryId={currentSummaryId}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* STAGE 2: DURING VISIT (IN-CONSULTATION MODE)                 */}
+      {/* ============================================================ */}
+      {activeStage === 'in_visit' && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border-2 border-plum-500 bg-stone-900 text-white p-6 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="inline-block rounded-md bg-plum-800 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-plum-200">
+                  In-Consultation Mode
+                </span>
+                <h2 className="text-xl font-bold mt-1 text-white">Active Visit Companion</h2>
+                <p className="text-xs text-stone-300 mt-1">
+                  High-contrast checklist and quick notepad to ensure your priority questions are addressed.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowQrModal(!showQrModal)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-stone-800 border border-stone-700 px-3.5 py-2 text-xs font-semibold text-stone-200 hover:bg-stone-700 transition"
+                >
+                  <QrCode className="h-4 w-4 text-plum-400" />
+                  {showQrModal ? 'Hide QR' : 'Show Share Link'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStage('debrief')}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-teal-500 px-4 py-2 text-xs font-bold text-stone-950 hover:bg-teal-400 transition"
+                >
+                  Done with Visit <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Share Link Banner if toggled */}
+            {showQrModal && (
+              <div className="mt-5 rounded-xl border border-stone-700 bg-stone-800 p-4 text-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-stone-200">Share Summary with Clinician</span>
+                  <button
+                    onClick={() => setShareDialogOpen(true)}
+                    className="text-plum-400 hover:text-plum-300 text-xs font-medium"
+                  >
+                    Open Share Link Settings
+                  </button>
+                </div>
+                <p className="text-stone-400">
+                  Have a share link ready? Your clinician can open it directly in their browser on any device.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Questions Checklist */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-stone-900 text-sm">Priority Questions for Healthcare Professional</h3>
+                <p className="text-xs text-stone-500">Tap questions as they are discussed to tick them off.</p>
+              </div>
+              <span className="text-xs font-bold text-plum-700 bg-plum-50 px-2.5 py-1 rounded-lg border border-plum-100">
+                {checklist.filter(c => c.done).length} / {checklist.length} Discussed
+              </span>
+            </div>
+
+            {checklist.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-sand-300 p-6 text-center">
+                <p className="text-xs text-stone-500">No questions loaded yet from preparation.</p>
+                <button
+                  onClick={() => {
+                    setChecklist([
+                      { id: '1', text: 'What do my recent symptoms and timeline indicate?', done: false },
+                      { id: '2', text: 'Are there any tests or imaging you recommend?', done: false },
+                      { id: '3', text: 'What changes should I watch out for next?', done: false },
+                      { id: '4', text: 'When should I schedule a follow-up visit?', done: false },
+                    ]);
+                  }}
+                  className="mt-2 text-xs font-semibold text-plum-600 hover:text-plum-700"
+                >
+                  Load Recommended Question Set
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {checklist.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => toggleChecklistItem(item.id)}
+                    className={`w-full text-left flex items-start gap-3 p-3.5 rounded-xl border transition ${
+                      item.done
+                        ? 'bg-stone-50 border-stone-200 text-stone-400 line-through'
+                        : 'bg-white border-sand-300 text-stone-800 hover:border-plum-400'
+                    }`}
+                  >
+                    {item.done ? (
+                      <CheckSquare className="h-5 w-5 text-teal-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <Square className="h-5 w-5 text-stone-400 shrink-0 mt-0.5" />
+                    )}
+                    <span className="text-sm font-medium">{item.text}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Quick add custom question */}
+            <div className="pt-2 flex gap-2">
+              <input
+                type="text"
+                placeholder="Add another question during visit..."
+                id="quick-question-input"
+                className="flex-1 rounded-xl border border-sand-300 px-3.5 py-2 text-xs outline-none focus:border-plum-500"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    addChecklistItem(e.currentTarget.value);
+                    e.currentTarget.value = '';
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.getElementById('quick-question-input') as HTMLInputElement;
+                  if (input && input.value) {
+                    addChecklistItem(input.value);
+                    input.value = '';
+                  }
+                }}
+                className="rounded-xl bg-plum-600 px-4 py-2 text-xs font-semibold text-white hover:bg-plum-700"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Real-time In-Visit Notepad */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm space-y-3">
+            <h3 className="font-bold text-stone-900 text-sm">Quick Visit Notepad</h3>
+            <p className="text-xs text-stone-500">Jot down doctor advice, medicine names, or next steps.</p>
+            <textarea
+              value={inVisitNotes}
+              onChange={e => setInVisitNotes(e.target.value)}
+              rows={4}
+              placeholder="e.g. Doctor recommended blood test for thyroid, follow up in 4 weeks if no change..."
+              className="w-full rounded-xl border border-sand-300 p-3.5 text-xs text-stone-800 outline-none focus:border-plum-500 resize-none"
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (inVisitNotes.trim()) {
+                    setDebriefForm(prev => ({
+                      ...prev,
+                      clinicalDiscussion: prev.clinicalDiscussion ? `${prev.clinicalDiscussion}\n${inVisitNotes}` : inVisitNotes,
+                    }));
+                  }
+                  setActiveStage('debrief');
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-700"
+              >
+                Transfer Notes into Debrief <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  // Review answers
-  if (step === 7) return (
-    <div>
-      <PageHeader title="Appointment Preparation" description="Review your answers" />
-      <div className="bg-white border border-sand-200 rounded-2xl p-8 max-w-2xl space-y-4">
-        {QUESTIONS.map(q => (
-          <div key={q.key}>
-            <h4 className="text-sm font-medium text-gray-700">{q.label}</h4>
-            <p className="text-sm text-gray-500 mt-1">{answers[q.key] || <em className="text-gray-300">Skipped</em>}</p>
+      {/* ============================================================ */}
+      {/* STAGE 3: AFTER VISIT (DEBRIEF & ACTIONABLE TASKS)           */}
+      {/* ============================================================ */}
+      {activeStage === 'debrief' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Post-Appointment Debrief"
+            description="Capture what your doctor explained, ordered tests, prescriptions, and your next actions."
+          />
+
+          {saveDebriefSuccess && (
+            <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-xs font-semibold text-teal-800">
+              Appointment debrief recorded successfully.
+            </div>
+          )}
+
+          {/* Guided Debrief Form */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-plum-700">Record Visit Outcomes</h3>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Clinician / Practice Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-stone-400" />
+                  <input
+                    type="text"
+                    value={debriefForm.clinicianName}
+                    onChange={e => setDebriefForm({ ...debriefForm, clinicianName: e.target.value })}
+                    placeholder="e.g. Dr. Sarah Jenkins, City Health"
+                    className="w-full rounded-xl border border-sand-300 bg-white pl-9 pr-3.5 py-2 text-xs outline-none focus:border-plum-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Visit Date</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-stone-400" />
+                  <input
+                    type="date"
+                    value={debriefForm.visitDate}
+                    onChange={e => setDebriefForm({ ...debriefForm, visitDate: e.target.value })}
+                    className="w-full rounded-xl border border-sand-300 bg-white pl-9 pr-3.5 py-2 text-xs outline-none focus:border-plum-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">
+                What did the doctor explain or advise?
+              </label>
+              <textarea
+                value={debriefForm.clinicalDiscussion}
+                onChange={e => setDebriefForm({ ...debriefForm, clinicalDiscussion: e.target.value })}
+                rows={3}
+                placeholder="Summary of what the doctor explained about your symptoms, reassurance, or guidance..."
+                className="w-full rounded-xl border border-sand-300 bg-white p-3 text-xs outline-none focus:border-plum-500 resize-none"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Tests or Referrals Ordered</label>
+                <textarea
+                  value={debriefForm.testsOrdered}
+                  onChange={e => setDebriefForm({ ...debriefForm, testsOrdered: e.target.value })}
+                  rows={2}
+                  placeholder="e.g. Full blood count, pelvic ultrasound, endocrinologist referral"
+                  className="w-full rounded-xl border border-sand-300 bg-white p-2.5 text-xs outline-none focus:border-plum-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Prescription or Treatment Changes</label>
+                <textarea
+                  value={debriefForm.prescriptionChanges}
+                  onChange={e => setDebriefForm({ ...debriefForm, prescriptionChanges: e.target.value })}
+                  rows={2}
+                  placeholder="e.g. Started iron tablets 325mg daily, stopped supplement"
+                  className="w-full rounded-xl border border-sand-300 bg-white p-2.5 text-xs outline-none focus:border-plum-500 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">Recommended Next Visit / Follow-Up</label>
+                <input
+                  type="text"
+                  value={debriefForm.followupDate}
+                  onChange={e => setDebriefForm({ ...debriefForm, followupDate: e.target.value })}
+                  placeholder="e.g. In 4 weeks, or if symptoms worsen"
+                  className="w-full rounded-xl border border-sand-300 bg-white px-3.5 py-2 text-xs outline-none focus:border-plum-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={handleSaveDebrief}
+                disabled={savingDebrief}
+                className="rounded-xl bg-teal-600 px-6 py-2.5 text-xs font-semibold text-white hover:bg-teal-700 transition"
+              >
+                {savingDebrief ? 'Saving...' : 'Save Appointment Debrief'}
+              </button>
+            </div>
           </div>
-        ))}
-        <div className="flex justify-between pt-4 border-t border-sand-100">
-          <button onClick={() => setStep(6)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
-            <ChevronLeft className="w-4 h-4" /> Edit Answers
-          </button>
-          <button onClick={goToSummary} className="bg-plum-600 text-white rounded-xl px-6 py-2.5 font-medium hover:bg-plum-700 transition-colors text-sm">
-            Generate Summary
-          </button>
+
+          {/* Actionable Follow-up Tasks Manager */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-stone-900 text-sm">Actionable Follow-up Tasks</h3>
+                <p className="text-xs text-stone-500">Track tests to book, prescriptions to collect, and return visits.</p>
+              </div>
+              <span className="text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
+                {followupTasks.filter(t => t.status === 'completed').length} / {followupTasks.length} Completed
+              </span>
+            </div>
+
+            {/* Add Task Bar */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <input
+                type="text"
+                placeholder="New follow-up action (e.g. Book ultrasound at radiology clinic)..."
+                value={newTaskTitle}
+                onChange={e => setNewTaskTitle(e.target.value)}
+                className="flex-1 rounded-xl border border-sand-300 px-3.5 py-2 text-xs outline-none focus:border-plum-500"
+              />
+              <input
+                type="date"
+                value={newTaskDueDate}
+                onChange={e => setNewTaskDueDate(e.target.value)}
+                className="rounded-xl border border-sand-300 px-3 py-2 text-xs outline-none focus:border-plum-500"
+              />
+              <button
+                type="button"
+                onClick={handleAddTask}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-plum-600 px-4 py-2 text-xs font-semibold text-white hover:bg-plum-700"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Action
+              </button>
+            </div>
+
+            {/* Task List */}
+            {followupTasks.length === 0 ? (
+              <p className="text-xs text-stone-400 italic py-2">No follow-up actions recorded yet.</p>
+            ) : (
+              <div className="divide-y divide-sand-200 rounded-xl border border-sand-200">
+                {followupTasks.map(task => (
+                  <div key={task.id} className="flex items-center justify-between p-3 text-xs hover:bg-sand-50/50 transition">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTaskStatus(task)}
+                        className="text-stone-400 hover:text-teal-600"
+                      >
+                        {task.status === 'completed' ? (
+                          <CheckSquare className="h-4 w-4 text-teal-600" />
+                        ) : (
+                          <Square className="h-4 w-4 text-stone-400" />
+                        )}
+                      </button>
+                      <span className={task.status === 'completed' ? 'text-stone-400 line-through' : 'font-medium text-stone-800'}>
+                        {task.title}
+                      </span>
+                      {task.dueDate && (
+                        <span className="inline-flex items-center gap-1 rounded bg-sand-100 px-1.5 py-0.5 text-[10px] text-stone-600">
+                          <Clock className="h-3 w-3" /> Due {task.dueDate}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="text-stone-400 hover:text-rose-600 p-1"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Past Debrief History */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="font-bold text-stone-900 text-sm">Past Appointment Debriefs</h3>
+            {debriefs.length === 0 ? (
+              <p className="text-xs text-stone-400 italic">No past debriefs on record.</p>
+            ) : (
+              <div className="space-y-3">
+                {debriefs.map((d, idx) => (
+                  <div key={d.id || idx} className="rounded-xl border border-sand-200 bg-sand-50/40 p-4 text-xs space-y-2">
+                    <div className="flex items-center justify-between font-semibold text-stone-800">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-plum-600" />
+                        {d.visitDate || 'Visit'}
+                      </span>
+                      {d.clinicianName && <span className="text-stone-600">{d.clinicianName}</span>}
+                    </div>
+
+                    {d.clinicalDiscussion && (
+                      <div>
+                        <span className="font-medium text-stone-700">Discussion: </span>
+                        <span className="text-stone-600">{d.clinicalDiscussion}</span>
+                      </div>
+                    )}
+
+                    {d.testsOrdered && (
+                      <div>
+                        <span className="font-medium text-stone-700">Tests/Referrals: </span>
+                        <span className="text-stone-600">{d.testsOrdered}</span>
+                      </div>
+                    )}
+
+                    {d.prescriptionChanges && (
+                      <div>
+                        <span className="font-medium text-stone-700">Prescription Changes: </span>
+                        <span className="text-stone-600">{d.prescriptionChanges}</span>
+                      </div>
+                    )}
+
+                    {d.followupDate && (
+                      <div className="text-[11px] text-plum-700 font-medium">
+                        Next follow-up: {d.followupDate}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
-  );
-
-  // Summary
-  return (
-    <div>
-      <PageHeader title="Your Appointment Summary" description="Review, edit, then print or copy" />
-
-      <div className="flex flex-wrap gap-3 mb-4 no-print">
-        <button onClick={handleCopy} className="inline-flex items-center gap-2 bg-white border border-sand-200 rounded-xl px-4 py-2 text-sm text-gray-600 hover:bg-sand-50 transition-colors">
-          {copied ? <Check className="w-4 h-4 text-teal-500" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
-        <button onClick={() => setShareDialogOpen(true)} className="inline-flex items-center gap-2 bg-white border border-sand-200 rounded-xl px-4 py-2 text-sm text-plum-700 hover:bg-plum-50 transition-colors font-medium">
-          <Share2 className="w-4 h-4 text-plum-600" /> Share Link
-        </button>
-        <button onClick={handlePrint} className="inline-flex items-center gap-2 bg-plum-600 text-white rounded-xl px-5 py-2 text-sm font-medium hover:bg-plum-700 transition-colors">
-          <Printer className="w-4 h-4" /> Print / Save PDF
-        </button>
-        <button onClick={() => setStep(0)} className="text-sm text-gray-500 hover:text-gray-700 ml-auto">Start Over</button>
-      </div>
-
-      <div ref={printRef} className="bg-white border border-sand-200 rounded-2xl p-6 md:p-8">
-        <textarea
-          value={summaryText}
-          onChange={e => setSummaryText(e.target.value)}
-          rows={Math.max(20, summaryText.split('\n').length + 2)}
-          className="w-full font-mono text-sm text-gray-700 outline-none resize-none leading-relaxed border-none p-0 bg-transparent"
-          aria-label="Editable appointment summary"
-        />
-      </div>
-
-      <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 no-print">
-        <p className="text-sm text-amber-800">
-          <strong>Reminder:</strong> This summary contains your self-reported information. It is not a diagnosis or medical assessment. Your healthcare professional will use their own clinical judgement. You can edit any section before printing.
-        </p>
-      </div>
-
-      <ShareDialog
-        isOpen={shareDialogOpen}
-        onClose={() => setShareDialogOpen(false)}
-        summaryId={currentSummaryId}
-      />
+      )}
     </div>
   );
 }
