@@ -15,6 +15,7 @@ import { summariesRoutes } from './routes/summaries.routes.js';
 import { transitionsRoutes } from './routes/transitions.routes.js';
 import { syncRoutes } from './routes/sync.routes.js';
 import { shareRoutes } from './routes/share.routes.js';
+import { aiRoutes } from './routes/ai.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -41,6 +42,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(transitionsRoutes, { prefix: '/api/v1/transitions' });
   await app.register(syncRoutes, { prefix: '/api/v1/sync' });
   await app.register(shareRoutes, { prefix: '/api/v1/share' });
+  await app.register(aiRoutes, { prefix: '/api/v1/ai' });
 
   return app;
 }

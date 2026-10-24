@@ -192,6 +192,21 @@ class ApiClient {
       }),
     getPublic: async (token: string) => this.request(`/share/public/${token}`),
   };
+
+  // --- AI Summary & Consent ---
+  ai = {
+    getConsents: async () => this.request('/ai/consents'),
+    updateConsent: async (consentType: string, granted: boolean) =>
+      this.request('/ai/consents', {
+        method: 'PUT',
+        body: JSON.stringify({ consentType, granted }),
+      }),
+    draftSummary: async (entryIds: string[], promptContext?: string) =>
+      this.request('/ai/draft-summary', {
+        method: 'POST',
+        body: JSON.stringify({ entryIds, promptContext }),
+      }),
+  };
 }
 
 export const api = new ApiClient();

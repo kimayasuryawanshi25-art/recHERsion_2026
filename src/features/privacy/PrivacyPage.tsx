@@ -118,6 +118,12 @@ export function PrivacyPage() {
             </div>
           </div>
           <div className="flex items-start gap-3">
+            <Lock className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
+            <div>
+              <p><strong>Explicit Consent for AI Drafting (Optional).</strong> AI assistance is strictly consent-gated and disabled by default. When enabled, only user-selected entries are transmitted. The server-side non-diagnostic linter enforces objective phrasing and automatically rejects diagnostic verdicts before delivery.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <div>
               <p><strong>Device Security & Boundaries:</strong></p>

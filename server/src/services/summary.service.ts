@@ -155,31 +155,31 @@ export async function assembleConsultationSummary(
 
   let orderCount = 3;
 
-  if (input.whatChanged.trim()) {
+  if ((input.whatChanged || '').trim()) {
     rawSections.push({
       id: 'whatChanged',
       title: 'RECENT CHANGES',
-      content: input.whatChanged.trim(),
+      content: (input.whatChanged || '').trim(),
       enabled: true,
       order: orderCount++,
     });
   }
 
-  if (input.mainConcerns.trim()) {
+  if ((input.mainConcerns || '').trim()) {
     rawSections.push({
       id: 'mainConcerns',
       title: 'MAIN CONCERNS',
-      content: input.mainConcerns.trim(),
+      content: (input.mainConcerns || '').trim(),
       enabled: true,
       order: orderCount++,
     });
   }
 
-  if (input.firstNoticed.trim()) {
+  if ((input.firstNoticed || '').trim()) {
     rawSections.push({
       id: 'firstNoticed',
       title: 'WHEN FIRST NOTICED',
-      content: input.firstNoticed.trim(),
+      content: (input.firstNoticed || '').trim(),
       enabled: true,
       order: orderCount++,
     });
@@ -195,11 +195,11 @@ export async function assembleConsultationSummary(
     });
   }
 
-  if (input.dailyImpact.trim()) {
+  if ((input.dailyImpact || '').trim()) {
     rawSections.push({
       id: 'dailyImpact',
       title: 'IMPACT ON DAILY ACTIVITIES',
-      content: input.dailyImpact.trim(),
+      content: (input.dailyImpact || '').trim(),
       enabled: true,
       order: orderCount++,
     });
@@ -215,11 +215,11 @@ export async function assembleConsultationSummary(
     });
   }
 
-  if (input.relevantRecords.trim()) {
+  if ((input.relevantRecords || '').trim()) {
     rawSections.push({
       id: 'relevantRecords',
       title: 'RELEVANT MEDICINES & RECORDS',
-      content: input.relevantRecords.trim(),
+      content: (input.relevantRecords || '').trim(),
       enabled: true,
       order: orderCount++,
     });
@@ -245,11 +245,11 @@ export async function assembleConsultationSummary(
     });
   }
 
-  if (input.questionsForDoctor.trim()) {
+  if ((input.questionsForDoctor || '').trim()) {
     rawSections.push({
       id: 'questions',
       title: 'QUESTIONS FOR HEALTHCARE PROFESSIONAL',
-      content: input.questionsForDoctor.trim(),
+      content: (input.questionsForDoctor || '').trim(),
       enabled: true,
       order: orderCount++,
     });

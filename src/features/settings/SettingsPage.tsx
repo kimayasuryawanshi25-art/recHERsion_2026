@@ -17,6 +17,7 @@ import {
   Lock,
   Shield,
   KeyRound,
+  Sparkles,
 } from 'lucide-react';
 import { pinLockService } from '../../lib/safety/pinLock';
 
@@ -46,6 +47,7 @@ export function SettingsPage() {
   const [isConfiguringPin, setIsConfiguringPin] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [pinError, setPinError] = useState('');
+  const [aiConsent, setAiConsent] = useState(false);
 
   useEffect(() => {
     getSettings().then(saved => {
@@ -60,9 +62,25 @@ export function SettingsPage() {
     const unsub = syncManager.subscribe((st, em) => {
       setSyncStatus(st);
       setUserEmail(em ?? null);
+      if (em) {
+        api.ai.getConsents().then(res => {
+          setAiConsent(Boolean(res?.consents?.ai_summary));
+        }).catch(() => {});
+      }
     });
     return unsub;
   }, []);
+
+  const handleToggleAiConsent = async () => {
+    try {
+      const nextVal = !aiConsent;
+      await api.ai.updateConsent('ai_summary', nextVal);
+      setAiConsent(nextVal);
+      setMessage(nextVal ? 'AI summary assistance enabled with non-diagnostic guardrails.' : 'AI summary assistance disabled.');
+    } catch {
+      setMessage('Failed to update AI consent settings.');
+    }
+  };
 
   const handleSavePin = async () => {
     if (!/^\d{4,6}$/.test(newPin)) {
@@ -497,6 +515,30 @@ export function SettingsPage() {
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   Sign Out
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-sand-200">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <Sparkles className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-stone-800">AI Consultation Scribe (Consent)</h3>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Allow server-side AI drafting of consultation summaries using selected records with strict non-diagnostic guardrails.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={aiConsent}
+                  onClick={handleToggleAiConsent}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition ${aiConsent ? 'bg-purple-600' : 'bg-stone-300'}`}
+                >
+                  <span
+                    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${aiConsent ? 'left-6' : 'left-1'}`}
+                  />
                 </button>
               </div>
             </div>
