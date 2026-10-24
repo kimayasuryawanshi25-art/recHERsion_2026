@@ -36,34 +36,6 @@ export function EntryForm({ editMode = false }: Props) {
     medications: '',
   });
 
-  useEffect(() => {
-    const init = async () => {
-      const settings = await getSettings();
-      if (settings) setContexts(settings.selectedContexts);
-      if (editMode && id) {
-        const entry = await getEntry(id);
-        if (entry) {
-          setForm({
-            date: entry.date,
-            time: entry.time || '',
-            symptom: entry.symptom,
-            severity: entry.severity?.toString() || '',
-            mood: entry.mood?.toString() || '',
-            energy: entry.energy?.toString() || '',
-            sleepQuality: entry.sleepQuality?.toString() || '',
-            dailyImpact: entry.dailyImpact || '',
-            notes: entry.notes || '',
-            medications: entry.medications || '',
-          });
-          if (entry.dailyImpact || entry.notes || entry.medications || entry.mood || entry.energy || entry.sleepQuality) {
-            setShowMore(true);
-          }
-        }
-      }
-      setLoading(false);
-    };
-    init();
-  }, [editMode, id]);
 
   const update = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -83,6 +55,38 @@ export function EntryForm({ editMode = false }: Props) {
     return Object.keys(e).length === 0;
   };
 
+  const [existingRecord, setExistingRecord] = useState<SymptomEntry | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      const settings = await getSettings();
+      if (settings) setContexts(settings.selectedContexts);
+      if (editMode && id) {
+        const entry = await getEntry(id);
+        if (entry) {
+          setExistingRecord(entry);
+          setForm({
+            date: entry.eventDate || entry.date || '',
+            time: entry.eventTime || entry.time || '',
+            symptom: entry.symptom,
+            severity: entry.severity?.toString() || '',
+            mood: entry.mood?.toString() || '',
+            energy: entry.energy?.toString() || '',
+            sleepQuality: entry.sleepQuality?.toString() || '',
+            dailyImpact: entry.dailyImpact || '',
+            notes: entry.notes || '',
+            medications: entry.medications || '',
+          });
+          if (entry.dailyImpact || entry.notes || entry.medications || entry.mood || entry.energy || entry.sleepQuality) {
+            setShowMore(true);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    init();
+  }, [editMode, id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -90,18 +94,21 @@ export function EntryForm({ editMode = false }: Props) {
     const now = new Date().toISOString();
     const entry: SymptomEntry = {
       id: editMode && id ? id : uuidv4(),
+      eventDate: form.date,
+      eventTime: form.time ? form.time : null,
       date: form.date,
       time: form.time || undefined,
       symptom: form.symptom.trim(),
-      severity: form.severity ? (Number(form.severity) as Severity) : undefined,
-      mood: form.mood ? Number(form.mood) : undefined,
-      energy: form.energy ? Number(form.energy) : undefined,
-      sleepQuality: form.sleepQuality ? Number(form.sleepQuality) : undefined,
-      dailyImpact: form.dailyImpact.trim() || undefined,
-      notes: form.notes.trim() || undefined,
-      medications: form.medications.trim() || undefined,
-      contexts,
-      createdAt: editMode ? now : now,
+      severity: form.severity ? (Number(form.severity) as Severity) : null,
+      mood: form.mood ? Number(form.mood) : null,
+      energy: form.energy ? Number(form.energy) : null,
+      sleepQuality: form.sleepQuality ? Number(form.sleepQuality) : null,
+      dailyImpact: form.dailyImpact.trim() || null,
+      notes: form.notes.trim() || null,
+      medications: form.medications.trim() || null,
+      contexts: contexts.length > 0 ? contexts : ['general-wellbeing'],
+      recordedAt: existingRecord?.recordedAt || now,
+      createdAt: existingRecord?.createdAt || now,
       updatedAt: now,
     };
     await saveEntry(entry);

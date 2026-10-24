@@ -6,10 +6,22 @@ export const DEMO_PERSONA = { name: 'Maya', age: 44, note: 'Fictional demo perso
 function d(iso: string, symptom: string, sev?: number, mood?: number, energy?: number, sleep?: number, impact?: string, notes?: string, meds?: string): SymptomEntry {
   const id = `demo-${iso}-${symptom.toLowerCase().replace(/\s/g, '-')}`;
   return {
-    id, date: iso, symptom, severity: sev as any, mood, energy, sleepQuality: sleep,
-    dailyImpact: impact, notes, medications: meds,
+    id,
+    eventDate: iso,
+    eventTime: null,
+    date: iso,
+    symptom,
+    severity: (sev as any) ?? null,
+    mood: mood ?? null,
+    energy: energy ?? null,
+    sleepQuality: sleep ?? null,
+    dailyImpact: impact ?? null,
+    notes: notes ?? null,
+    medications: meds ?? null,
     contexts: ['midlife-changes', 'general-wellbeing'],
-    createdAt: `${iso}T08:00:00Z`, updatedAt: `${iso}T08:00:00Z`,
+    recordedAt: `${iso}T08:00:00Z`,
+    createdAt: `${iso}T08:00:00Z`,
+    updatedAt: `${iso}T08:00:00Z`,
   };
 }
 

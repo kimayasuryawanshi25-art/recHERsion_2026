@@ -9,7 +9,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries } from '../../lib/db';
 import { generateObservations } from '../../lib/observations';
 import {
-  SEVERITY_COLORS, SEVERITY_LABELS,
+  SEVERITY_COLORS, SEVERITY_LABELS, getEntryDate,
   type SymptomEntry, type Severity,
 } from '../../types/health';
 
@@ -27,11 +27,11 @@ export function TimelinePage() {
   useEffect(() => {
     (async () => {
       const e = await getAllEntries();
-      setEntries(e.sort((a, b) => a.date.localeCompare(b.date)));
+      setEntries(e.sort((a, b) => getEntryDate(a).localeCompare(getEntryDate(b))));
       if (e.length > 0) {
-        const dates = e.map(x => x.date).sort();
-        setStartDate(dates[0]);
-        setEndDate(dates[dates.length - 1]);
+        const dates = e.map(x => getEntryDate(x)).filter(Boolean).sort();
+        setStartDate(dates[0] || '');
+        setEndDate(dates[dates.length - 1] || '');
       }
       setLoading(false);
     })();
@@ -39,8 +39,8 @@ export function TimelinePage() {
 
   const filtered = useMemo(() => {
     let f = entries;
-    if (startDate) f = f.filter(e => e.date >= startDate);
-    if (endDate) f = f.filter(e => e.date <= endDate);
+    if (startDate) f = f.filter(e => getEntryDate(e) >= startDate);
+    if (endDate) f = f.filter(e => getEntryDate(e) <= endDate);
     if (symptomFilter) f = f.filter(e => e.symptom === symptomFilter);
     return f;
   }, [entries, startDate, endDate, symptomFilter]);
@@ -59,8 +59,10 @@ export function TimelinePage() {
   const sevData = useMemo(() => {
     const byDate: Record<string, { date: string; [k: string]: number | string }> = {};
     filtered.filter(e => e.severity).forEach(e => {
-      if (!byDate[e.date]) byDate[e.date] = { date: e.date };
-      byDate[e.date][e.symptom] = e.severity!;
+      const d = getEntryDate(e);
+      if (!d) return;
+      if (!byDate[d]) byDate[d] = { date: d };
+      byDate[d][e.symptom] = e.severity!;
     });
     return Object.values(byDate).sort((a, b) => (a.date as string).localeCompare(b.date as string));
   }, [filtered]);
@@ -68,10 +70,12 @@ export function TimelinePage() {
   const wellbeingData = useMemo(() => {
     const byDate: Record<string, any> = {};
     filtered.forEach(e => {
-      if (!byDate[e.date]) byDate[e.date] = { date: e.date };
-      if (e.sleepQuality) byDate[e.date].sleep = e.sleepQuality;
-      if (e.mood) byDate[e.date].mood = e.mood;
-      if (e.energy) byDate[e.date].energy = e.energy;
+      const d = getEntryDate(e);
+      if (!d) return;
+      if (!byDate[d]) byDate[d] = { date: d };
+      if (e.sleepQuality) byDate[d].sleep = e.sleepQuality;
+      if (e.mood) byDate[d].mood = e.mood;
+      if (e.energy) byDate[d].energy = e.energy;
     });
     return Object.values(byDate).sort((a: any, b: any) => a.date.localeCompare(b.date));
   }, [filtered]);
@@ -138,7 +142,7 @@ export function TimelinePage() {
           </select>
         </div>
         {(symptomFilter || startDate || endDate) && (
-          <button onClick={() => { setSymptomFilter(''); const dates = entries.map(x => x.date).sort(); setStartDate(dates[0]); setEndDate(dates[dates.length - 1]); }}
+          <button onClick={() => { setSymptomFilter(''); const dates = entries.map(x => getEntryDate(x)).filter(Boolean).sort(); setStartDate(dates[0] || ''); setEndDate(dates[dates.length - 1] || ''); }}
             className="text-plum-600 hover:text-plum-700 text-sm font-medium pb-0.5">Clear filters</button>
         )}
         <div className="text-xs text-gray-400 ml-auto">{filtered.length} entr{filtered.length === 1 ? 'y' : 'ies'}</div>
@@ -157,34 +161,47 @@ export function TimelinePage() {
       {/* Timeline */}
       {activeTab === 'timeline' && (
         <div className="space-y-3">
-          {filtered.sort((a, b) => b.date.localeCompare(a.date)).map(entry => (
-            <div key={entry.id} className="bg-white border border-sand-200 rounded-xl p-4 flex items-start gap-3">
-              <div className="text-center shrink-0 w-14">
-                <div className="text-xs text-gray-400">{new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })}</div>
-                <div className="text-xl font-bold text-gray-700">{new Date(entry.date + 'T00:00:00').getDate()}</div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-gray-800 text-sm">{entry.symptom}</span>
-                  {entry.severity && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
-                      style={{ backgroundColor: SEVERITY_COLORS[entry.severity as Severity] }}>
-                      {SEVERITY_LABELS[entry.severity as Severity]}
-                    </span>
-                  )}
+          {filtered.sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a))).map(entry => {
+            const d = getEntryDate(entry);
+            const dateObj = d ? new Date(d + 'T00:00:00') : new Date();
+            return (
+              <div key={entry.id} className="bg-white border border-sand-200 rounded-xl p-4 flex items-start gap-3">
+                <div className="text-center shrink-0 w-14">
+                  <div className="text-xs text-gray-400">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
+                  <div className="text-xl font-bold text-gray-700">{dateObj.getDate()}</div>
                 </div>
-                {entry.dailyImpact && <p className="text-xs text-gray-500 mt-1">{entry.dailyImpact}</p>}
-                <div className="flex gap-3 mt-1 text-xs text-gray-400">
-                  {entry.mood && <span>Mood {entry.mood}/5</span>}
-                  {entry.sleepQuality && <span>Sleep {entry.sleepQuality}/5</span>}
-                  {entry.energy && <span>Energy {entry.energy}/5</span>}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-gray-800 text-sm">{entry.symptom}</span>
+                    {entry.severity ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
+                        style={{ backgroundColor: SEVERITY_COLORS[entry.severity as Severity] }}>
+                        {SEVERITY_LABELS[entry.severity as Severity]}
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-sand-200 text-stone-500">
+                        Severity: not recorded
+                      </span>
+                    )}
+                  </div>
+                  {entry.dailyImpact ? (
+                    <p className="text-xs text-gray-500 mt-1">{entry.dailyImpact}</p>
+                  ) : null}
+                  <div className="flex gap-3 mt-1 text-xs text-gray-400">
+                    {entry.mood !== null && entry.mood !== undefined ? <span>Mood {entry.mood}/5</span> : null}
+                    {entry.sleepQuality !== null && entry.sleepQuality !== undefined ? <span>Sleep {entry.sleepQuality}/5</span> : null}
+                    {entry.energy !== null && entry.energy !== undefined ? <span>Energy {entry.energy}/5</span> : null}
+                    {entry.mood === null && entry.sleepQuality === null && entry.energy === null && (
+                      <span className="italic text-stone-400">Wellbeing metrics: not recorded</span>
+                    )}
+                  </div>
                 </div>
+                <Link to={`/journal/edit/${entry.id}`} className="p-1.5 text-gray-400 hover:text-plum-600 rounded-lg hover:bg-sand-100 shrink-0" aria-label="View entry">
+                  <Eye className="w-4 h-4" />
+                </Link>
               </div>
-              <Link to={`/journal/edit/${entry.id}`} className="p-1.5 text-gray-400 hover:text-plum-600 rounded-lg hover:bg-sand-100 shrink-0" aria-label="View entry">
-                <Eye className="w-4 h-4" />
-              </Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

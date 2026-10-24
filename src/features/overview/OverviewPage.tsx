@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, BookOpen, Clock, FileText, TrendingUp, BarChart3 } from 'lucide-react';
 import { getAllEntries } from '../../lib/db';
-import type { SymptomEntry } from '../../types/health';
+import { type SymptomEntry, getEntryDate } from '../../types/health';
 import { generateObservations } from '../../lib/observations';
 
 export function OverviewPage() {
@@ -12,14 +12,14 @@ export function OverviewPage() {
   useEffect(() => {
     (async () => {
       const e = await getAllEntries();
-      setEntries(e.sort((a, b) => b.date.localeCompare(a.date)));
+      setEntries(e.sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a))));
       setLoading(false);
     })();
   }, []);
 
   const recentEntries = entries.slice(0, 5);
   const uniqueSymptoms = [...new Set(entries.map(e => e.symptom))];
-  const dates = entries.map(e => e.date).sort();
+  const dates = entries.map(e => getEntryDate(e)).filter(Boolean).sort();
   const start = dates[0] || '';
   const end = dates[dates.length - 1] || '';
   const observations = entries.length >= 2 ? generateObservations(entries, start, end).slice(0, 3) : [];
@@ -38,7 +38,7 @@ export function OverviewPage() {
         {[
           { label: 'Check-ins', value: entries.length, icon: BookOpen, color: 'text-plum-600 bg-plum-50' },
           { label: 'Symptoms tracked', value: uniqueSymptoms.length, icon: TrendingUp, color: 'text-teal-600 bg-teal-50' },
-          { label: 'Days covered', value: new Set(entries.map(e => e.date)).size, icon: Clock, color: 'text-rose-600 bg-rose-50' },
+          { label: 'Days covered', value: new Set(entries.map(e => getEntryDate(e)).filter(Boolean)).size, icon: Clock, color: 'text-rose-600 bg-rose-50' },
           { label: 'Date range', value: entries.length > 0 ? `${new Date(start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '—', icon: BarChart3, color: 'text-amber-600 bg-amber-50' },
         ].map(s => (
           <div key={s.label} className="bg-white border border-sand-200 rounded-xl p-4">
@@ -70,17 +70,20 @@ export function OverviewPage() {
               <Link to="/journal" className="text-plum-600 hover:text-plum-700 text-sm font-medium">View all →</Link>
             </div>
             <div className="space-y-3">
-              {recentEntries.map(e => (
-                <Link key={e.id} to={`/journal/edit/${e.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-sand-50 transition-colors">
-                  <div className="text-xs text-gray-400 w-16 shrink-0">
-                    {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-gray-700">{e.symptom}</span>
-                    {e.severity && <span className="text-xs text-gray-400 ml-2">Severity {e.severity}/5</span>}
-                  </div>
-                </Link>
-              ))}
+              {recentEntries.map(e => {
+                const ed = getEntryDate(e);
+                return (
+                  <Link key={e.id} to={`/journal/edit/${e.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-sand-50 transition-colors">
+                    <div className="text-xs text-gray-400 w-16 shrink-0">
+                      {ed ? new Date(ed + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-gray-700">{e.symptom}</span>
+                      {e.severity && <span className="text-xs text-gray-400 ml-2">Severity {e.severity}/5</span>}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 

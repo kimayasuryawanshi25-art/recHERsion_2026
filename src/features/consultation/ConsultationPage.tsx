@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FileText, ChevronRight, ChevronLeft, Printer, Copy, Check } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries, saveConsultation } from '../../lib/db';
-import type { SymptomEntry, ConsultationSummary } from '../../types/health';
+import { type SymptomEntry, type ConsultationSummary, getEntryDate } from '../../types/health';
 import { v4 as uuidv4 } from 'uuid';
 
 const QUESTIONS = [
@@ -23,7 +23,10 @@ export function ConsultationPage() {
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    (async () => { const e = await getAllEntries(); setEntries(e.sort((a, b) => b.date.localeCompare(a.date))); })();
+    (async () => {
+      const e = await getAllEntries();
+      setEntries(e.sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a))));
+    })();
   }, []);
 
   const generateSummary = () => {
@@ -56,9 +59,9 @@ export function ConsultationPage() {
     // Add recorded symptom data
     if (entries.length > 0) {
       const recent = entries.slice(0, 20);
-      const dates = recent.map(e => e.date);
-      const start = dates[dates.length - 1];
-      const end = dates[0];
+      const dates = recent.map(e => getEntryDate(e)).filter(Boolean);
+      const start = dates[dates.length - 1] || '';
+      const end = dates[0] || '';
       lines.push('RECORDED SYMPTOMS');
       lines.push(`Based on ${entries.length} check-ins (${start} to ${end})`);
 

@@ -4,7 +4,7 @@ import { Plus, Search, Pencil, Trash2, BookOpen } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { getAllEntries, deleteEntry } from '../../lib/db';
-import { SEVERITY_LABELS, SEVERITY_COLORS, type SymptomEntry, type Severity } from '../../types/health';
+import { SEVERITY_LABELS, SEVERITY_COLORS, getEntryDate, getEntryTime, type SymptomEntry, type Severity } from '../../types/health';
 
 export function JournalPage() {
   const [entries, setEntries] = useState<SymptomEntry[]>([]);
@@ -13,13 +13,19 @@ export function JournalPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
 
+  const load = async () => {
+    setLoading(true);
+    const e = await getAllEntries();
+    setEntries(e.sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a))));
+    setLoading(false);
+  };
+
   useEffect(() => { load(); }, []);
-  const load = async () => { setLoading(true); const e = await getAllEntries(); setEntries(e.sort((a, b) => b.date.localeCompare(a.date))); setLoading(false); };
 
   const filtered = entries.filter(e =>
     e.symptom.toLowerCase().includes(search.toLowerCase()) ||
     (e.notes && e.notes.toLowerCase().includes(search.toLowerCase())) ||
-    e.date.includes(search)
+    getEntryDate(e).includes(search)
   );
 
   const handleDelete = async () => {
@@ -79,22 +85,31 @@ export function JournalPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-gray-800">{entry.symptom}</span>
-                  {entry.severity && (
+                  {entry.severity ? (
                     <span
                       className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
                       style={{ backgroundColor: SEVERITY_COLORS[entry.severity as Severity] }}
                     >
                       {SEVERITY_LABELS[entry.severity as Severity]}
                     </span>
+                  ) : (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-sand-200 text-stone-500">
+                      Severity: not recorded
+                    </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-500 mt-1">{fmt(entry.date)}{entry.time ? ` at ${entry.time}` : ''}</div>
+                <div className="text-sm text-gray-500 mt-1">
+                  {fmt(getEntryDate(entry))}{getEntryTime(entry) ? ` at ${getEntryTime(entry)}` : ''}
+                </div>
                 {entry.dailyImpact && <p className="text-sm text-gray-600 mt-2 line-clamp-2">{entry.dailyImpact}</p>}
                 {entry.notes && <p className="text-xs text-gray-400 mt-1 line-clamp-1">{entry.notes}</p>}
                 <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                  {entry.mood && <span>Mood: {entry.mood}/5</span>}
-                  {entry.energy && <span>Energy: {entry.energy}/5</span>}
-                  {entry.sleepQuality && <span>Sleep: {entry.sleepQuality}/5</span>}
+                  {entry.mood !== null && entry.mood !== undefined ? <span>Mood: {entry.mood}/5</span> : null}
+                  {entry.energy !== null && entry.energy !== undefined ? <span>Energy: {entry.energy}/5</span> : null}
+                  {entry.sleepQuality !== null && entry.sleepQuality !== undefined ? <span>Sleep: {entry.sleepQuality}/5</span> : null}
+                  {entry.mood === null && entry.energy === null && entry.sleepQuality === null && (
+                    <span className="italic text-stone-400">Wellbeing metrics: not recorded</span>
+                  )}
                 </div>
               </div>
               <div className="flex gap-1 shrink-0">
