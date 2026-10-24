@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
-import { OnboardingPage } from './features/onboarding/OnboardingPage';
+import { HomePage } from './features/home/HomePage';
 import { OverviewPage } from './features/overview/OverviewPage';
 import { JournalPage } from './features/journal/JournalPage';
 import { EntryForm } from './features/journal/EntryForm';
@@ -10,9 +11,9 @@ import { ConsultationPage } from './features/consultation/ConsultationPage';
 import { PreventivePage } from './features/preventive/PreventivePage';
 import { LearningPage } from './features/learning/LearningPage';
 import { PrivacyPage } from './features/privacy/PrivacyPage';
+import { SettingsPage } from './features/settings/SettingsPage';
 import { getSettings, saveSettings } from './lib/db';
 import type { UserSettings } from './types/health';
-import { SettingsPage } from './features/settings/SettingsPage';
 
 export default function App() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -20,29 +21,47 @@ export default function App() {
   const [discreetMode, setDiscreetMode] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const s = await getSettings();
-      setSettings(s || null);
-      setDiscreetMode(s?.discreetMode || false);
-      setLoading(false);
-    })();
+    const loadSettings = async () => {
+      try {
+        const s = await getSettings();
+        setSettings(s || null);
+        setDiscreetMode(s?.discreetMode || false);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadSettings();
   }, []);
 
-  // Re-check settings on navigation (simple approach)
+  // Refresh settings if they change elsewhere in the app.
   useEffect(() => {
-    const check = async () => {
-      const s = await getSettings();
-      setSettings(s || null);
-    };
-    const interval = setInterval(check, 2000);
+    const interval = setInterval(async () => {
+      try {
+        const s = await getSettings();
+        setSettings(s || null);
+        setDiscreetMode(s?.discreetMode || false);
+      } catch (error) {
+        console.error('Failed to refresh settings:', error);
+      }
+    }, 2000);
+
     return () => clearInterval(interval);
   }, []);
 
   const toggleDiscreet = async () => {
     const next = !discreetMode;
     setDiscreetMode(next);
+
     if (settings) {
-      const updated = { ...settings, discreetMode: next, updatedAt: new Date().toISOString() };
+      const updated = {
+        ...settings,
+        discreetMode: next,
+        updatedAt: new Date().toISOString(),
+      };
+
       await saveSettings(updated);
       setSettings(updated);
     }
@@ -59,36 +78,50 @@ export default function App() {
     );
   }
 
-  const onboarded = settings?.onboardingComplete;
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/" element={<HomePage />} />
+
+        <Route
+          path="/onboarding"
+          element={<Navigate to="/overview" replace />}
+        />
+
         <Route
           path="/*"
           element={
-            !onboarded ? (
-              <Navigate to="/onboarding" replace />
-            ) : (
-              <AppShell discreetMode={discreetMode} onToggleDiscreet={toggleDiscreet}>
-                <Routes>
-                  <Route path="/" element={<OverviewPage />} />
-                  <Route path="/journal" element={<JournalPage />} />
-                  <Route path="/journal/new" element={<EntryForm />} />
-                  <Route path="/journal/edit/:id" element={<EntryForm editMode />} />
-                  <Route path="/timeline" element={<TimelinePage />} />
-                  <Route path="/consultation" element={<ConsultationPage />} />
-                  <Route path="/preventive" element={<PreventivePage />} />
-                  <Route path="/learning" element={<LearningPage />} />
-                  <Route path="/privacy" element={<PrivacyPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                </Routes>
-              </AppShell>
-            )
+            <AppShell
+              discreetMode={discreetMode}
+              onToggleDiscreet={toggleDiscreet}
+            >
+              <Routes>
+                <Route path="/overview" element={<OverviewPage />} />
+                <Route path="/journal" element={<JournalPage />} />
+                <Route path="/journal/new" element={<EntryForm />} />
+                <Route
+                  path="/journal/edit/:id"
+                  element={<EntryForm editMode />}
+                />
+                <Route path="/timeline" element={<TimelinePage />} />
+                <Route
+                  path="/consultation"
+                  element={<ConsultationPage />}
+                />
+                <Route path="/preventive" element={<PreventivePage />} />
+                <Route path="/learning" element={<LearningPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route
+                  path="*"
+                  element={<Navigate to="/overview" replace />}
+                />
+              </Routes>
+            </AppShell>
           }
         />
       </Routes>
     </BrowserRouter>
   );
 }
+  
