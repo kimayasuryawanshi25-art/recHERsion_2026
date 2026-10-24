@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, HardDrive, Shield, Download, ChevronRight, Check } from 'lucide-react';
 import { HEALTH_CONTEXTS, type HealthContextId, type UserSettings } from '../../types/health';
-import { saveSettings, getSettings } from '../../lib/db';
+import { saveSettings } from '../../lib/db';
 import { getDemoEntries, getDemoSettings } from '../../data/demo-data';
 import { saveEntry } from '../../lib/db';
 

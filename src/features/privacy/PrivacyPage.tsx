@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
-import { Lock, Download, Upload, Trash2, Shield, HardDrive, AlertTriangle, Check, Eye, EyeOff } from 'lucide-react';
+import { Lock, Download, Upload, Trash2, Shield, HardDrive, AlertTriangle,} from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { exportAllData, importData, deleteAllData, getSettings, saveSettings } from '../../lib/db';
+import { exportAllData, importData, deleteAllData, saveSettings } from '../../lib/db';
 import type { ExportData } from '../../types/health';
 import { getDemoEntries, getDemoSettings } from '../../data/demo-data';
 import { saveEntry } from '../../lib/db';

@@ -1,59 +1,136 @@
+
 @import "tailwindcss";
 
 @theme {
-  --color-rose-50: #fff1f2;
-  --color-rose-100: #ffe4e6;
-  --color-rose-200: #fecdd3;
-  --color-rose-300: #fda4af;
-  --color-rose-400: #fb7185;
-  --color-rose-500: #f43f5e;
-  --color-rose-600: #e11d48;
-  --color-rose-700: #be123c;
-  --color-rose-800: #9f1239;
-  --color-rose-900: #881337;
-  --color-plum-50: #faf5ff;
-  --color-plum-100: #f3e8ff;
-  --color-plum-200: #e9d5ff;
-  --color-plum-300: #d8b4fe;
-  --color-plum-400: #c084fc;
-  --color-plum-500: #a855f7;
-  --color-plum-600: #9333ea;
-  --color-plum-700: #7e22ce;
-  --color-plum-800: #6b21a8;
-  --color-plum-900: #581c87;
-  --color-teal-50: #f0fdfa;
-  --color-teal-100: #ccfbf1;
-  --color-teal-200: #99f6e4;
-  --color-teal-300: #5eead4;
-  --color-teal-400: #2dd4bf;
-  --color-teal-500: #14b8a6;
-  --color-teal-600: #0d9488;
-  --color-teal-700: #0f766e;
-  --color-teal-800: #115e59;
-  --color-teal-900: #134e4a;
-  --color-sand-50: #fdfcfa;
-  --color-sand-100: #f7f5f0;
-  --color-sand-200: #efe9df;
-  --color-sand-300: #e2d8c8;
-  --color-sand-400: #c9b99a;
-  --color-sand-500: #a89771;
-  --color-sand-600: #8b7a59;
-  --color-sand-700: #6e5f43;
-  --color-sand-800: #544832;
-  --color-sand-900: #3a3122;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-rose-50: #fff4f3;
+  --color-rose-100: #fce7e5;
+  --color-rose-200: #f4ceca;
+  --color-rose-500: #c98288;
+  --color-rose-600: #b66c77;
+
+  --color-plum-50: #f6f2f7;
+  --color-plum-100: #ece4ef;
+  --color-plum-200: #d9c9df;
+  --color-plum-500: #92799a;
+  --color-plum-600: #7c6385;
+  --color-plum-700: #634b6c;
+
+  --color-teal-50: #eff6f1;
+  --color-teal-100: #dce9df;
+  --color-teal-500: #789b83;
+  --color-teal-600: #5e806a;
+
+  --color-sand-50: #fbfaf7;
+  --color-sand-100: #f4f1e9;
+  --color-sand-200: #e9e3d8;
+  --color-sand-300: #d8cebf;
+  --color-sand-500: #a2947d;
+  --color-sand-700: #6b6255;
+  --color-sand-900: #342f2b;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: #37332f;
+  background: #fbfaf7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-sand-50 text-gray-800 antialiased;
-  font-family: var(--font-sans);
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #fbfaf7;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 *:focus-visible {
-  @apply outline-2 outline-offset-2 outline-plum-500 rounded-sm;
+  outline: 2px solid #92799a;
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #ece4ef;
+  color: #634b6c;
+}
+
+.app-card {
+  background: #fff;
+  border: 1px solid #eee9e1;
+  border-radius: 20px;
+  box-shadow: 0 3px 14px rgb(52 47 43 / 3%);
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.app-card:hover {
+  box-shadow: 0 8px 24px rgb(52 47 43 / 6%);
+}
+
+.page-enter {
+  animation: page-enter 350ms ease both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media print {
-  .no-print { display: none !important; }
-  body { background: white; }
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  .app-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
 }

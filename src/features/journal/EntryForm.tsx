@@ -6,7 +6,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import {
   COMMON_SYMPTOMS, SEVERITY_LABELS, MOOD_LABELS, ENERGY_LABELS, SLEEP_LABELS,
-  type SymptomEntry, type Severity, type HealthContextId, HEALTH_CONTEXTS,
+  type SymptomEntry, type Severity, type HealthContextId
 } from '../../types/health';
 import { saveEntry, getEntry, deleteEntry, getSettings } from '../../lib/db';
 

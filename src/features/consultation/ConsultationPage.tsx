@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { FileText, ChevronRight, ChevronLeft, Printer, Copy, Check } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries, saveConsultation } from '../../lib/db';
-import { generateObservations } from '../../lib/observations';
 import type { SymptomEntry, ConsultationSummary } from '../../types/health';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -99,3 +99,13 @@ export interface ExportData {
   symptomEntries: SymptomEntry[];
   consultationSummaries: ConsultationSummary[];
 }
+
+export interface UserSettings {
+  id: string;
+  selectedContexts: HealthContextId[];
+  onboardingComplete: boolean;
+  discreetMode: boolean;
+  displayName?: string;
+  createdAt: string;
+  updatedAt: string;
+}

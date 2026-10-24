@@ -4,12 +4,12 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line,
   CartesianGrid, Legend, Cell,
 } from 'recharts';
-import { Calendar, Filter, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries } from '../../lib/db';
-import { generateObservations, type Observation } from '../../lib/observations';
+import { generateObservations } from '../../lib/observations';
 import {
-  SEVERITY_COLORS, SEVERITY_LABELS, COMMON_SYMPTOMS,
+  SEVERITY_COLORS, SEVERITY_LABELS,
   type SymptomEntry, type Severity,
 } from '../../types/health';
 
@@ -200,7 +200,7 @@ export function TimelinePage() {
                 <BarChart data={freqData} layout="vertical" margin={{ left: 80 }}>
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number) => [`${v} entries`, 'Count']} />
+                  <Tooltip formatter={(value) => [`${value ?? 0} entries`,'Count',]} />
                   <Bar dataKey="count" radius={[0, 6, 6, 0]}>
                     {freqData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                   </Bar>
@@ -219,7 +219,7 @@ export function TimelinePage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="date" tickFormatter={fmt} tick={{ fontSize: 11 }} />
                   <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} />
-                  <Tooltip labelFormatter={(l: string) => fmt(l)} />
+                  <Tooltip labelFormatter={(label) =>label == null ? '' : fmt(String(label))} />
                   <Legend />
                   {symptoms.filter(s => !symptomFilter || s === symptomFilter).slice(0, 5).map((s, i) => (
                     <Line key={s} type="monotone" dataKey={s} stroke={CHART_COLORS[i % CHART_COLORS.length]}
@@ -240,7 +240,7 @@ export function TimelinePage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="date" tickFormatter={fmt} tick={{ fontSize: 11 }} />
                   <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} />
-                  <Tooltip labelFormatter={(l: string) => fmt(l)} />
+                 <Tooltip labelFormatter={(label) =>label == null ? '' : fmt(String(label))} />
                   <Legend />
                   <Line type="monotone" dataKey="sleep" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Sleep" />
                   <Line type="monotone" dataKey="mood" stroke="#a855f7" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Mood" />

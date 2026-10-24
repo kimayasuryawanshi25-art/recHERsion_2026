@@ -12,6 +12,7 @@ import { LearningPage } from './features/learning/LearningPage';
 import { PrivacyPage } from './features/privacy/PrivacyPage';
 import { getSettings, saveSettings } from './lib/db';
 import type { UserSettings } from './types/health';
+import { SettingsPage } from './features/settings/SettingsPage';
 
 export default function App() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -81,6 +82,7 @@ export default function App() {
                   <Route path="/preventive" element={<PreventivePage />} />
                   <Route path="/learning" element={<LearningPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
               </AppShell>
             )
