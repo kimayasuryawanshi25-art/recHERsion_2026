@@ -1,0 +1,16 @@
+{
+  "name": "HerHealth Companion",
+  "short_name": "HerHealth",
+  "description": "Privacy-first women's health organizer and appointment preparation companion.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbf9f5",
+  "theme_color": "#7e22ce",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

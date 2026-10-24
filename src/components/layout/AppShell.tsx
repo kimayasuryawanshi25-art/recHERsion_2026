@@ -24,6 +24,7 @@ import {
   MapPin,
   FolderLock,
   Video,
+  Globe,
 } from 'lucide-react';
 import { SyncStatusBadge } from '../ui/SyncStatusBadge';
 import { AuthModal } from '../../features/auth/AuthModal';
@@ -31,21 +32,23 @@ import { UrgentCarePanel } from '../ui/UrgentCarePanel';
 import { PinLockModal } from '../ui/PinLockModal';
 import { QuickEscapeButton } from '../ui/QuickEscapeButton';
 import { pinLockService } from '../../lib/safety/pinLock';
+import { useTranslation } from '../../lib/i18n/context';
+import { AVAILABLE_LANGUAGES } from '../../lib/i18n/translations';
 
 const NAV = [
-  { to: '/overview', icon: LayoutDashboard, label: 'Overview' },
-  { to: '/profile', icon: User, label: 'About Me' },
-  { to: '/navigator', icon: Compass, label: 'Care Navigator' },
-  { to: '/finder', icon: MapPin, label: 'Care Finder' },
-  { to: '/records', icon: FolderLock, label: 'Records Vault' },
-  { to: '/journal', icon: BookOpen, label: 'Journal' },
-  { to: '/timeline', icon: Clock, label: 'Timeline & Insights' },
-  { to: '/consultation', icon: FileText, label: 'Appointment Prep' },
-  { to: '/teleconsult', icon: Video, label: 'Simulated Consult' },
-  { to: '/preventive', icon: ShieldCheck, label: 'Preventive Care' },
-  { to: '/learning', icon: GraduationCap, label: 'Learn' },
-  { to: '/privacy', icon: LockKeyhole, label: 'Privacy & Data' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/overview', icon: LayoutDashboard, label: 'Overview', i18nKey: 'nav.overview' as const },
+  { to: '/profile', icon: User, label: 'About Me', i18nKey: 'nav.aboutMe' as const },
+  { to: '/navigator', icon: Compass, label: 'Care Navigator', i18nKey: 'nav.navigator' as const },
+  { to: '/finder', icon: MapPin, label: 'Care Finder', i18nKey: 'nav.finder' as const },
+  { to: '/records', icon: FolderLock, label: 'Records Vault', i18nKey: 'nav.records' as const },
+  { to: '/journal', icon: BookOpen, label: 'Journal', i18nKey: 'nav.journal' as const },
+  { to: '/timeline', icon: Clock, label: 'Timeline & Insights', i18nKey: 'nav.timeline' as const },
+  { to: '/consultation', icon: FileText, label: 'Appointment Prep', i18nKey: 'nav.consultation' as const },
+  { to: '/teleconsult', icon: Video, label: 'Simulated Consult', i18nKey: 'nav.teleconsult' as const },
+  { to: '/preventive', icon: ShieldCheck, label: 'Preventive Care', i18nKey: 'nav.preventive' as const },
+  { to: '/learning', icon: GraduationCap, label: 'Learn', i18nKey: 'nav.learn' as const },
+  { to: '/privacy', icon: LockKeyhole, label: 'Privacy & Data', i18nKey: 'nav.privacy' as const },
+  { to: '/settings', icon: Settings, label: 'Settings', i18nKey: 'nav.settings' as const },
 ];
 
 interface Props {
@@ -59,6 +62,8 @@ export function AppShell({
   discreetMode,
   onToggleDiscreet,
 }: Props) {
+  const { t, language, setLanguage } = useTranslation();
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [urgentCareOpen, setUrgentCareOpen] = useState(false);
@@ -89,31 +94,43 @@ export function AppShell({
 
   const appName = discreetMode ? 'Health Notes' : 'HerHealth Companion';
 
-  const navLink = (item: (typeof NAV)[number], mobile = false) => (
-    <NavLink
-      key={item.to}
-      to={item.to}
-      end={item.to === '/overview'}
-      onClick={() => mobile && setMobileOpen(false)}
-      className={({ isActive }) =>
-        `group flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all duration-200 ${
-          isActive
-            ? 'bg-[#EDE7F6] text-[#5B4B8A] font-semibold'
-            : 'text-stone-600 hover:bg-[#FAFAFF] hover:text-[#5B4B8A]'
-        }`
-      }
-      aria-label={item.label}
-    >
-      <item.icon className="h-[19px] w-[19px] shrink-0" />
-      <span className="min-w-0 flex-1">
-        {discreetMode && item.label === 'Journal' ? 'Notes' : item.label}
-      </span>
-      <ChevronRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-60" />
-    </NavLink>
-  );
+  const navLink = (item: (typeof NAV)[number], mobile = false) => {
+    const itemLabel = t(item.i18nKey) || item.label;
+    const displayLabel = discreetMode && item.to === '/journal'
+      ? (language === 'hi' ? 'नोट्स' : language === 'mr' ? 'नोंदी' : 'Notes')
+      : itemLabel;
+
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.to === '/overview'}
+        onClick={() => mobile && setMobileOpen(false)}
+        className={({ isActive }) =>
+          `group flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all duration-200 ${
+            isActive
+              ? 'bg-[#EDE7F6] text-[#5B4B8A] font-semibold'
+              : 'text-stone-600 hover:bg-[#FAFAFF] hover:text-[#5B4B8A]'
+          }`
+        }
+        aria-label={itemLabel}
+      >
+        <item.icon className="h-[19px] w-[19px] shrink-0" />
+        <span className="min-w-0 flex-1">{displayLabel}</span>
+        <ChevronRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-60" />
+      </NavLink>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAFAFF] via-white to-[#EDE7F6]/70 md:flex">
+      {/* Skip to content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[#5B4B8A] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-xl focus:outline-none"
+      >
+        Skip to main content
+      </a>
       {/* Desktop sidebar */}
       <aside className="no-print sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-[#EDE7F6] bg-white/90 px-4 py-5 backdrop-blur-xl md:flex">
         <button
@@ -253,6 +270,30 @@ export function AppShell({
                 Menu
               </p>
               {NAV.map(item => navLink(item, true))}
+              <div className="mt-4 border-t border-sand-200 pt-3">
+                <p className="mb-2 px-1 text-xs font-semibold text-stone-500 flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-[#5B4B8A]" /> Language / भाषा / भाषा
+                </p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {AVAILABLE_LANGUAGES.map(lang => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => setLanguage(lang.code)}
+                      className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-xs transition border ${
+                        language === lang.code
+                          ? 'border-[#9B72CF] bg-[#EDE7F6] font-bold text-[#5B4B8A]'
+                          : 'border-sand-200 bg-white text-stone-700 hover:bg-sand-50'
+                      }`}
+                      aria-label={`Select ${lang.label}`}
+                    >
+                      <span className="text-sm">{lang.flag}</span>
+                      <span className="text-[11px] font-medium">{lang.native}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="mt-4 rounded-xl bg-teal-50 p-3 text-xs leading-relaxed text-stone-600">
                 Your health information is stored locally in this browser.
               </div>
@@ -274,6 +315,51 @@ export function AppShell({
           </div>
           <div className="flex items-center gap-2.5">
             <QuickEscapeButton />
+
+            {/* Language Selector Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setLangMenuOpen(open => !open)}
+                className="flex items-center gap-1.5 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:border-[#9B72CF] hover:text-[#5B4B8A]"
+                aria-haspopup="true"
+                aria-expanded={langMenuOpen}
+                aria-label="Select language"
+              >
+                <Globe className="h-3.5 w-3.5 text-[#5B4B8A]" />
+                <span className="font-semibold uppercase">{language}</span>
+              </button>
+              {langMenuOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-44 rounded-2xl border border-sand-200 bg-white p-1.5 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+                  role="menu"
+                >
+                  {AVAILABLE_LANGUAGES.map(lang => (
+                    <button
+                      key={lang.code}
+                      role="menuitem"
+                      type="button"
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setLangMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs transition ${
+                        language === lang.code
+                          ? 'bg-[#EDE7F6] font-bold text-[#5B4B8A]'
+                          : 'text-stone-700 hover:bg-sand-50'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{lang.flag}</span>
+                        <span>{lang.native}</span>
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-mono uppercase">{lang.code}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => setUrgentCareOpen(true)}
@@ -298,7 +384,13 @@ export function AppShell({
           </div>
         </div>
 
-        <main className="page-enter mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 md:p-8 xl:px-10">
+        <main
+          id="main-content"
+          role="main"
+          tabIndex={-1}
+          aria-live="polite"
+          className="page-enter mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 md:p-8 xl:px-10 outline-none"
+        >
           {children}
         </main>
 
