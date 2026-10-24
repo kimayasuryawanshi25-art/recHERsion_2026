@@ -22,6 +22,8 @@ import {
   User,
   Compass,
   MapPin,
+  FolderLock,
+  Video,
 } from 'lucide-react';
 import { SyncStatusBadge } from '../ui/SyncStatusBadge';
 import { AuthModal } from '../../features/auth/AuthModal';
@@ -35,9 +37,11 @@ const NAV = [
   { to: '/profile', icon: User, label: 'About Me' },
   { to: '/navigator', icon: Compass, label: 'Care Navigator' },
   { to: '/finder', icon: MapPin, label: 'Care Finder' },
+  { to: '/records', icon: FolderLock, label: 'Records Vault' },
   { to: '/journal', icon: BookOpen, label: 'Journal' },
   { to: '/timeline', icon: Clock, label: 'Timeline & Insights' },
   { to: '/consultation', icon: FileText, label: 'Appointment Prep' },
+  { to: '/teleconsult', icon: Video, label: 'Simulated Consult' },
   { to: '/preventive', icon: ShieldCheck, label: 'Preventive Care' },
   { to: '/learning', icon: GraduationCap, label: 'Learn' },
   { to: '/privacy', icon: LockKeyhole, label: 'Privacy & Data' },

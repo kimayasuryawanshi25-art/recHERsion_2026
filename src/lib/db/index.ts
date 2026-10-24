@@ -2,7 +2,7 @@ import { openDB, type IDBPDatabase } from 'idb';
 import type { SymptomEntry, UserSettings, ConsultationSummary, ExportData } from '../../types/health';
 
 const DB_NAME = 'herhealth-companion';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 export interface OutboxItem {
   id: string;
@@ -71,6 +71,11 @@ export function getDB(): Promise<IDBPDatabase> {
           }
           if (!db.objectStoreNames.contains('followupTasks')) {
             db.createObjectStore('followupTasks', { keyPath: 'id' });
+          }
+        }
+        if (oldVersion < 5) {
+          if (!db.objectStoreNames.contains('recordsVault')) {
+            db.createObjectStore('recordsVault', { keyPath: 'id' });
           }
         }
       },
@@ -429,6 +434,33 @@ export async function deleteFollowupTask(id: string): Promise<void> {
   });
 }
 
+// Local Records Vault
+export async function getVaultRecords(): Promise<any[]> {
+  const db = await getDB();
+  const records = await db.getAll('recordsVault');
+  return records.filter((r: any) => !r.deletedAt);
+}
+
+export async function saveVaultRecord(record: any): Promise<void> {
+  const db = await getDB();
+  const now = new Date().toISOString();
+  const updated = {
+    ...record,
+    createdAt: record.createdAt || now,
+    updatedAt: now,
+  };
+  await db.put('recordsVault', updated);
+}
+
+export async function deleteVaultRecord(id: string): Promise<void> {
+  const db = await getDB();
+  const record = await db.get('recordsVault', id);
+  if (record) {
+    record.deletedAt = new Date().toISOString();
+    await db.put('recordsVault', record);
+  }
+}
+
 // Bulk operations
 export async function deleteAllData(): Promise<void> {
   const db = await getDB();
@@ -442,6 +474,7 @@ export async function deleteAllData(): Promise<void> {
   await db.clear('medicineEvents');
   await db.clear('appointmentDebriefs');
   await db.clear('followupTasks');
+  await db.clear('recordsVault');
   await db.clear('outbox');
   await db.clear('syncMeta');
 }

@@ -16,6 +16,8 @@ import { PublicSharePage } from './features/consultation/PublicSharePage';
 import { AboutMePage } from './features/profile/AboutMePage';
 import { CareNavigatorPage } from './features/navigator/CareNavigatorPage';
 import { CareFinderPage } from './features/finder/CareFinderPage';
+import { SimulatedTeleconsultPage } from './features/consultation/SimulatedTeleconsultPage';
+import { RecordsVaultPage } from './features/vault/RecordsVaultPage';
 import { getSettings, saveSettings } from './lib/db';
 import type { UserSettings } from './types/health';
 
@@ -87,6 +89,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/s/:token" element={<PublicSharePage />} />
+        <Route path="/c/:token" element={<PublicSharePage />} />
         <Route
           path="/*"
           element={
@@ -99,6 +102,8 @@ export default function App() {
                 <Route path="/profile" element={<AboutMePage />} />
                 <Route path="/navigator" element={<CareNavigatorPage />} />
                 <Route path="/finder" element={<CareFinderPage />} />
+                <Route path="/records" element={<RecordsVaultPage />} />
+                <Route path="/teleconsult" element={<SimulatedTeleconsultPage />} />
                 <Route path="/journal" element={<JournalPage />} />
                 <Route path="/journal/new" element={<EntryForm />} />
                 <Route

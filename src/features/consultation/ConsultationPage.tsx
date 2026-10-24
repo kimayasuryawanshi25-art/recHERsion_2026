@@ -18,6 +18,7 @@ import {
   ListTodo,
   ArrowRight,
   Clock,
+  Video,
 } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import {
@@ -609,7 +610,14 @@ export function ConsultationPage() {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="/teleconsult"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-stone-800 border border-stone-700 px-3.5 py-2 text-xs font-semibold text-plum-300 hover:bg-stone-700 transition"
+                >
+                  <Video className="h-4 w-4" />
+                  Simulated Consult
+                </a>
                 <button
                   type="button"
                   onClick={() => setShowQrModal(!showQrModal)}

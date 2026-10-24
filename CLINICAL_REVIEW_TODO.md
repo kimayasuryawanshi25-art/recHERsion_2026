@@ -39,3 +39,13 @@ This living register records every piece of medical content, triage guideline, s
 | CR-14-02 | Post-Visit Debrief Schema | Structured recording of doctor explanations, ordered investigations, prescription changes, and recommended return timeframe. | Australian Digital Health Agency (ADHA) Consultation Records Guidance | Pending Clinical Review | Ensure fields capture patient recollections without implying clinical verification of advice. |
 | CR-14-03 | Medication Refill Alerts | Low refill thresholds (<= 2 refills remaining) and calendar reminder prompts; strictly avoiding adherence scoring or dosing recommendations. | Australian Commission on Safety and Quality in Health Care (ACSQHC) Medication Safety | Pending Clinical Review | Verify that refill reminders do not encourage self-directed dosage modifications. |
 | CR-14-04 | Follow-Up Action Item Tracking | Tracking tests to book, prescriptions to collect, and return visits with status checkboxes and due dates. | NPS MedicineWise & Healthdirect Follow-Up Action Planning | Pending Clinical Review | Confirm that task tracking assists patient self-organization without replacing official discharge summaries. |
+
+---
+
+## Phase 15: Clinician View, Simulated Consult & Records Vault
+
+| ID | Item / Feature | Proposed Text / Logic | Sourced Authority / Basis | Status | Reviewer Notes |
+|---|---|---|---|---|---|
+| CR-15-01 | 4-Quadrant Rapid Clinical Scan | Four structured quadrants (Primary Concerns & Timing, Daily Functional Impact, Recorded Health Background, Priority Questions) for rapid 10-15 minute GP consults. | RACGP General Practice Standards; Australian Digital Health Agency (ADHA) Event Summaries | Pending Clinical Review | Verify that the 4-quadrant layout delivers critical clinical context within 30 seconds of GP review. |
+| CR-15-02 | Simulated Teleconsult Rehearsal Scripts | Interactive dialogue prompts and patient advocacy tips (e.g., stating primary impact in first 60 seconds) with explicit "DEMO ONLY" banner. | Healthdirect Australia Telehealth Guidelines; RACGP Telehealth Standards | Pending Clinical Review | Review simulated dialogue to ensure advice empowers patient communication without predetermining diagnoses. |
+| CR-15-03 | Records Vault Categories & Scopes | Document categories (Pathology / Blood Test, Ultrasound / Imaging, Specialist Letter, Prescription, Other) stored privately in local IndexedDB. | Australian Privacy Principles (APPs); ADHA My Health Record document categorization | Pending Clinical Review | Confirm that document categories match standard clinical classifications in Australian primary care. |
