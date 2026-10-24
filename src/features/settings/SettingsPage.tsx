@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Save,
+  Cloud,
+  LogOut,
+  RefreshCw,
 } from 'lucide-react';
 
 import {
@@ -21,12 +24,18 @@ import {
   saveSettings,
 } from '../../lib/db';
 import type { ExportData, UserSettings } from '../../types/health';
+import { AuthModal } from '../auth/AuthModal';
+import { syncManager, type SyncStatus } from '../../lib/sync/syncWorker';
+import { api } from '../../lib/api';
 
 export function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(syncManager.getStatus());
+  const [userEmail, setUserEmail] = useState<string | null>(syncManager.getUserEmail());
   const fileInput = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -37,7 +46,32 @@ export function SettingsPage() {
         setDisplayName(saved.displayName ?? '');
       }
     });
+
+    const unsub = syncManager.subscribe((st, em) => {
+      setSyncStatus(st);
+      setUserEmail(em ?? null);
+    });
+    return unsub;
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await api.auth.logout();
+      await syncManager.onUserLogout();
+      setMessage('Signed out successfully.');
+    } catch {
+      setMessage('Failed to sign out.');
+    }
+  };
+
+  const handleSyncNow = async () => {
+    try {
+      await syncManager.syncNow();
+      setMessage('Sync completed.');
+    } catch {
+      setMessage('Sync failed. Please check connection.');
+    }
+  };
 
   const saveProfile = async () => {
     if (!settings) return;
@@ -285,6 +319,64 @@ export function SettingsPage() {
 
       <section className="app-card p-5 sm:p-6">
         <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-plum-100 text-plum-700">
+            <Cloud className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="font-semibold text-stone-800">Account & Cloud Sync (Optional)</h2>
+            <p className="mt-1 text-sm text-stone-500">
+              Sync your encrypted journal across your devices. Local-only mode works 100% without an account.
+            </p>
+          </div>
+        </div>
+
+        {userEmail ? (
+          <div className="rounded-xl border border-sand-200 bg-sand-50 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-stone-500">Signed in as</div>
+                <div className="text-sm font-bold text-stone-900">{userEmail}</div>
+                <div className="text-xs text-teal-700 mt-0.5">Status: {syncStatus}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSyncNow}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-sand-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 hover:bg-sand-100 transition"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
+                  Sync Now
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-sand-300 bg-white px-3.5 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-stone-600 mb-4">
+              You are currently using <strong>Local-Only Mode</strong>. Your data never leaves this browser unless you sign in.
+            </p>
+            <button
+              type="button"
+              onClick={() => setAuthModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-plum-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-plum-700"
+            >
+              <Cloud className="h-4 w-4" />
+              Sign In or Create Account
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="app-card p-5 sm:p-6">
+        <div className="mb-5 flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
             <HardDrive className="h-5 w-5" />
           </span>
@@ -378,6 +470,11 @@ export function SettingsPage() {
       <div className="pb-4 text-center text-xs text-stone-400">
         HerHealth Companion · Your health information, on your terms.
       </div>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

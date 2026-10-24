@@ -19,6 +19,8 @@ import {
   ChevronRight,
   Leaf,
 } from 'lucide-react';
+import { SyncStatusBadge } from '../ui/SyncStatusBadge';
+import { AuthModal } from '../../features/auth/AuthModal';
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Overview' },
@@ -43,6 +45,7 @@ export function AppShell({
   onToggleDiscreet,
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -172,6 +175,7 @@ export function AppShell({
           </button>
 
           <div className="flex items-center gap-2">
+            <SyncStatusBadge onClick={() => setAuthModalOpen(true)} className="scale-90" />
             <button
               type="button"
               onClick={() => navigate('/journal/new')}
@@ -230,18 +234,21 @@ export function AppShell({
               )?.label ?? 'Health space'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onToggleDiscreet}
-            className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-2 text-xs font-medium text-stone-600 transition hover:border-plum-200 hover:text-plum-700"
-          >
-            {discreetMode ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-            {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
-          </button>
+          <div className="flex items-center gap-3">
+            <SyncStatusBadge onClick={() => setAuthModalOpen(true)} />
+            <button
+              type="button"
+              onClick={onToggleDiscreet}
+              className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:border-plum-200 hover:text-plum-700"
+            >
+              {discreetMode ? (
+                <EyeOff className="h-3.5 w-3.5" />
+              ) : (
+                <Eye className="h-3.5 w-3.5" />
+              )}
+              {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
+            </button>
+          </div>
         </div>
 
         <main className="page-enter mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 md:p-8 xl:px-10">
@@ -256,6 +263,11 @@ export function AppShell({
           </span>
         </footer>
       </div>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

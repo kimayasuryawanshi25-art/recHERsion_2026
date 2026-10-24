@@ -56,7 +56,7 @@ export function PrivacyPage() {
         // Sanitize — don't execute any code from imported data
         setPendingFile(data);
         setShowImportConfirm(true);
-      } catch (err) {
+      } catch {
         setImportResult('Failed to parse file. Please select a valid JSON export.');
       }
     };
@@ -93,29 +93,38 @@ export function PrivacyPage() {
 
   return (
     <div>
-      <PageHeader title="Privacy & Data Controls" description="Your data stays on your device" />
+      <PageHeader title="Privacy & Data Controls" description="Your health data on your terms" />
 
       {/* Privacy info */}
       <div className="bg-white border border-sand-200 rounded-2xl p-6 mb-6">
-        <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-plum-500" /> How Your Data Is Stored</h2>
-        <div className="space-y-3 text-sm text-gray-600">
+        <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-plum-500" /> Storage & Encryption Disclosures</h2>
+        <div className="space-y-4 text-sm text-gray-600">
           <div className="flex items-start gap-3">
-            <HardDrive className="w-4 h-4 text-plum-400 mt-0.5 shrink-0" />
-            <p><strong>Local storage only.</strong> All your health records are stored in your browser's IndexedDB. No data is sent to external servers.</p>
+            <HardDrive className="w-4 h-4 text-plum-500 mt-0.5 shrink-0" />
+            <div>
+              <p><strong>Local-First Storage (Default).</strong> All your health check-ins and notes are stored directly on this device in your browser's IndexedDB. The app is 100% functional without an account or internet connection.</p>
+            </div>
           </div>
           <div className="flex items-start gap-3">
-            <Lock className="w-4 h-4 text-plum-400 mt-0.5 shrink-0" />
-            <p><strong>No account required.</strong> This app works entirely in your browser without sign-up or login.</p>
+            <Lock className="w-4 h-4 text-teal-600 mt-0.5 shrink-0" />
+            <div>
+              <p><strong>Optional Cloud Sync with Field-Level Encryption.</strong> If you choose to create an account for multi-device sync, sensitive fields (notes, impact, medications, follow-up plans) are encrypted with <strong>AES-256-GCM</strong>. Missing fields are stored explicitly as unrecorded.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Shield className="w-4 h-4 text-plum-600 mt-0.5 shrink-0" />
+            <div>
+              <p><strong>Zero Health Content Logging.</strong> Server logs record only non-sensitive action types and timestamps (e.g. <code>sync_push_completed</code>). Your symptoms, journal text, and health observations are NEVER written to server log streams.</p>
+            </div>
           </div>
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <div>
-              <p><strong>Limitations to be aware of:</strong></p>
+              <p><strong>Device Security & Boundaries:</strong></p>
               <ul className="list-disc ml-5 mt-1 text-xs text-gray-500 space-y-1">
-                <li>Browser IndexedDB is not encrypted. Anyone with access to this browser profile could potentially access your data.</li>
-                <li>Clearing browser data or uninstalling the browser will delete your records.</li>
-                <li>Deleting data within this app does not delete previously exported files or screenshots.</li>
-                <li>This app does not include advertising, third-party analytics, or automatic data sharing.</li>
+                <li>Browser IndexedDB is accessible to anyone using this browser profile. Use Discreet Mode or device PIN lock when sharing screens.</li>
+                <li>Clearing browser storage or resetting the browser without syncing will remove local records.</li>
+                <li>Zero advertising, zero analytics trackers, and zero telemetry.</li>
               </ul>
             </div>
           </div>
