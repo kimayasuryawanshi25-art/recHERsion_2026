@@ -12,13 +12,10 @@ import { PreventivePage } from './features/preventive/PreventivePage';
 import { LearningPage } from './features/learning/LearningPage';
 import { PrivacyPage } from './features/privacy/PrivacyPage';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { PublicSharePage } from './features/consultation/PublicSharePage';
+import { AboutMePage } from './features/profile/AboutMePage';
 import { getSettings, saveSettings } from './lib/db';
 import type { UserSettings } from './types/health';
-<<<<<<< HEAD
-import { SettingsPage } from './features/settings/SettingsPage';
-import { PublicSharePage } from './features/consultation/PublicSharePage';
-=======
->>>>>>> 8836c519b8675b886f9339a0c4b2cc43bbc6a054
 
 export default function App() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -86,18 +83,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-<<<<<<< HEAD
-        <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route path="/s/:token" element={<PublicSharePage />} />
-=======
         <Route path="/" element={<HomePage />} />
-
-        <Route
-          path="/onboarding"
-          element={<Navigate to="/overview" replace />}
-        />
-
->>>>>>> 8836c519b8675b886f9339a0c4b2cc43bbc6a054
+        <Route path="/s/:token" element={<PublicSharePage />} />
         <Route
           path="/*"
           element={
@@ -107,6 +94,7 @@ export default function App() {
             >
               <Routes>
                 <Route path="/overview" element={<OverviewPage />} />
+                <Route path="/profile" element={<AboutMePage />} />
                 <Route path="/journal" element={<JournalPage />} />
                 <Route path="/journal/new" element={<EntryForm />} />
                 <Route

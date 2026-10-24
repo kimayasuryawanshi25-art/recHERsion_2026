@@ -144,6 +144,11 @@ export const ExportDataSchema = z.object({
   settings: UserSettingsSchema.optional(),
   symptomEntries: z.array(SymptomEntrySchema),
   consultationSummaries: z.array(ConsultationSummarySchema),
+  profileSections: z.union([z.record(z.string(), z.any()), z.array(z.any())]).optional(),
+  healthItems: z.array(z.any()).optional(),
+  lifeEvents: z.array(z.any()).optional(),
+  careTeam: z.array(z.any()).optional(),
+  medicineEvents: z.array(z.any()).optional(),
 });
 export type ExportData = z.infer<typeof ExportDataSchema>;
 

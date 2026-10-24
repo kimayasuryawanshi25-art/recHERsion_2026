@@ -4,9 +4,9 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line,
   CartesianGrid, Legend, Cell,
 } from 'recharts';
-import { Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2 } from 'lucide-react';
+import { Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2, Pill, Sparkles } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { getAllEntries } from '../../lib/db';
+import { getAllEntries, getMedicineEvents, getLifeEvents } from '../../lib/db';
 import { generateObservations } from '../../lib/observations';
 import {
   SEVERITY_COLORS, SEVERITY_LABELS, getEntryDate,
@@ -17,6 +17,8 @@ const CHART_COLORS = ['#a855f7', '#f43f5e', '#14b8a6', '#f97316', '#3b82f6', '#8
 
 export function TimelinePage() {
   const [entries, setEntries] = useState<SymptomEntry[]>([]);
+  const [medicineEvents, setMedicineEvents] = useState<any[]>([]);
+  const [lifeEvents, setLifeEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [symptomFilter, setSymptomFilter] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -26,8 +28,14 @@ export function TimelinePage() {
 
   useEffect(() => {
     (async () => {
-      const e = await getAllEntries();
+      const [e, meds, life] = await Promise.all([
+        getAllEntries(),
+        getMedicineEvents(),
+        getLifeEvents(),
+      ]);
       setEntries(e.sort((a, b) => getEntryDate(a).localeCompare(getEntryDate(b))));
+      setMedicineEvents(meds);
+      setLifeEvents(life);
       if (e.length > 0) {
         const dates = e.map(x => getEntryDate(x)).filter(Boolean).sort();
         setStartDate(dates[0] || '');
@@ -162,26 +170,111 @@ export function TimelinePage() {
       {activeTab === 'timeline' && (
         <div className="space-y-3">
           {(() => {
-            const sorted = [...filtered].sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a)));
-            return sorted.map((entry, index) => {
-              const d = getEntryDate(entry);
-              const dateObj = new Date((d || '1970-01-01') + 'T00:00:00');
+            const timelineItems: Array<{
+              id: string;
+              date: string;
+              type: 'symptom' | 'medicine' | 'life_event';
+              data: any;
+            }> = [];
 
-              // Calculate gap to next (earlier) entry
+            filtered.forEach(entry => {
+              const d = getEntryDate(entry);
+              if (d) timelineItems.push({ id: `symptom-${entry.id}`, date: d, type: 'symptom', data: entry });
+            });
+
+            if (!symptomFilter) {
+              medicineEvents.forEach(med => {
+                const d = med.startedOn || med.stoppedOn || med.createdAt?.slice(0, 10);
+                if (!d) return;
+                if (startDate && d < startDate) return;
+                if (endDate && d > endDate) return;
+                timelineItems.push({ id: `med-${med.id}`, date: d, type: 'medicine', data: med });
+              });
+
+              lifeEvents.forEach(ev => {
+                const d = ev.startDate || ev.endDate || ev.createdAt?.slice(0, 10);
+                if (!d) return;
+                if (startDate && d < startDate) return;
+                if (endDate && d > endDate) return;
+                timelineItems.push({ id: `life-${ev.id}`, date: d, type: 'life_event', data: ev });
+              });
+            }
+
+            const sorted = timelineItems.sort((a, b) => b.date.localeCompare(a.date));
+            const symptomOnly = sorted.filter(item => item.type === 'symptom');
+
+            return sorted.map(item => {
+              const dateObj = new Date((item.date || '1970-01-01') + 'T00:00:00');
+
+              if (item.type === 'medicine') {
+                const med = item.data;
+                return (
+                  <div key={item.id} className="bg-plum-50/50 border border-plum-100 rounded-xl p-4 flex items-start gap-3">
+                    <div className="text-center shrink-0 w-14">
+                      <div className="text-xs text-plum-500 font-medium">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
+                      <div className="text-xl font-bold text-plum-900">{dateObj.getDate()}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Pill className="h-4 w-4 text-plum-600 shrink-0" />
+                        <span className="font-semibold text-stone-800 text-sm">
+                          {med.stoppedOn ? `Stopped: ${med.name}` : `Recorded medicine: ${med.name}`}
+                        </span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-plum-100 text-plum-800">
+                          Context marker — recorded by you
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-600 mt-1">
+                        {med.dose ? `Dose: ${med.dose}` : null}
+                        {med.frequency ? ` • Frequency: ${med.frequency}` : null}
+                        {med.reason ? ` • For: ${med.reason}` : null}
+                      </p>
+                      {med.notes && <p className="text-xs text-stone-500 italic mt-0.5">{med.notes}</p>}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (item.type === 'life_event') {
+                const ev = item.data;
+                return (
+                  <div key={item.id} className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-4 flex items-start gap-3">
+                    <div className="text-center shrink-0 w-14">
+                      <div className="text-xs text-amber-700 font-medium">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
+                      <div className="text-xl font-bold text-amber-900">{dateObj.getDate()}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                        <span className="font-semibold text-stone-800 text-sm">{ev.title}</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800">
+                          Life context — recorded by you
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-600 mt-1 capitalize">
+                        Category: {ev.category ? ev.category.replace('_', ' ') : 'General'}
+                      </p>
+                      {ev.notes && <p className="text-xs text-stone-500 italic mt-0.5">{ev.notes}</p>}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Symptom entry
+              const entry = item.data;
+              const symIndex = symptomOnly.findIndex(s => s.id === item.id);
               let gapDays = 0;
               let nextDateStr = '';
-              if (index < sorted.length - 1) {
-                const nextD = getEntryDate(sorted[index + 1]);
-                if (d && nextD) {
-                  const tCurrent = new Date(d + 'T00:00:00').getTime();
-                  const tNext = new Date(nextD + 'T00:00:00').getTime();
-                  gapDays = Math.round((tCurrent - tNext) / (1000 * 60 * 60 * 24));
-                  nextDateStr = nextD;
-                }
+              if (symIndex >= 0 && symIndex < symptomOnly.length - 1) {
+                const nextSym = symptomOnly[symIndex + 1];
+                const tCurrent = new Date(item.date + 'T00:00:00').getTime();
+                const tNext = new Date(nextSym.date + 'T00:00:00').getTime();
+                gapDays = Math.round((tCurrent - tNext) / (1000 * 60 * 60 * 24));
+                nextDateStr = nextSym.date;
               }
 
               return (
-                <div key={entry.id}>
+                <div key={item.id}>
                   <div className="bg-white border border-sand-200 rounded-xl p-4 flex items-start gap-3">
                     <div className="text-center shrink-0 w-14">
                       <div className="text-xs text-gray-400">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
@@ -222,7 +315,7 @@ export function TimelinePage() {
                     <div className="my-3 flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-dashed border-sand-300 bg-sand-100/50 text-xs text-stone-500">
                       <CalendarX2 className="h-4 w-4 text-stone-400 shrink-0" />
                       <span>
-                        <strong>{gapDays} days without recorded check-ins</strong> (between {nextDateStr} and {d})
+                        <strong>{gapDays} days without recorded check-ins</strong> (between {nextDateStr} and {item.date})
                       </span>
                     </div>
                   )}

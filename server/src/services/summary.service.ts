@@ -1,7 +1,7 @@
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import crypto from 'node:crypto';
 import { db } from '../db/index.js';
-import { consultationSummaries, symptomEntries, appointments, screeningRecords, auditEvents } from '../db/schema.js';
+import { consultationSummaries, symptomEntries, appointments, screeningRecords, auditEvents, healthItems, lifeEvents, medicationEvents } from '../db/schema.js';
 import { cryptoService } from './crypto.service.js';
 import { getEntryDate, assertDescriptiveWording } from '@rechersion/shared';
 import type { SummaryInterviewInput, SummarySection, UpdateSummaryInput } from '@rechersion/shared';
@@ -135,6 +135,54 @@ export async function assembleConsultationSummary(
     }
   }
 
+  // 5b. Fetch Profile & About Me Items (toggled by user for appointment summary)
+  const userHealthItems = await db
+    .select()
+    .from(healthItems)
+    .where(and(eq(healthItems.userId, userId), isNull(healthItems.deletedAt), eq(healthItems.includeInSummary, 1)));
+
+  let healthBackgroundText = '';
+  if (userHealthItems.length > 0) {
+    const lines = userHealthItems.map(item => {
+      const detail = item.detailEncrypted ? ` (${cryptoService.decryptField(item.detailEncrypted)})` : '';
+      const rec = item.recordedDate ? ` — recorded: ${item.recordedDate}` : '';
+      return `  • ${item.kind.toUpperCase()}: ${item.label}${detail}${rec}`;
+    });
+    healthBackgroundText = lines.join('\n');
+  }
+
+  const userMeds = await db
+    .select()
+    .from(medicationEvents)
+    .where(and(eq(medicationEvents.userId, userId), isNull(medicationEvents.deletedAt), eq(medicationEvents.includeInSummary, 1)));
+
+  let profileMedsText = '';
+  if (userMeds.length > 0) {
+    const lines = userMeds.map(m => {
+      const name = cryptoService.decryptField(m.nameEncrypted);
+      const dose = m.dose ? ` ${m.dose}` : '';
+      const freq = m.frequency ? `, ${m.frequency}` : '';
+      const start = m.startDate ? ` (started ${m.startDate})` : '';
+      const stop = m.stopDate ? ` (stopped ${m.stopDate})` : '';
+      return `  • ${name}${dose}${freq}${start}${stop} [Status: ${m.status}]`;
+    });
+    profileMedsText = lines.join('\n');
+  }
+
+  const userLifeEvents = await db
+    .select()
+    .from(lifeEvents)
+    .where(and(eq(lifeEvents.userId, userId), isNull(lifeEvents.deletedAt), eq(lifeEvents.includeInSummary, 1)));
+
+  let lifeEventsText = '';
+  if (userLifeEvents.length > 0) {
+    const lines = userLifeEvents.map(e => {
+      const notes = e.notesEncrypted ? ` — ${cryptoService.decryptField(e.notesEncrypted)}` : '';
+      return `  • ${e.date}: ${e.title} (${e.category.replace('_', ' ')})${notes}`;
+    });
+    lifeEventsText = lines.join('\n');
+  }
+
   // 6. Build default raw sections
   const rawSections: SummarySection[] = [
     {
@@ -220,6 +268,36 @@ export async function assembleConsultationSummary(
       id: 'relevantRecords',
       title: 'RELEVANT MEDICINES & RECORDS',
       content: (input.relevantRecords || '').trim(),
+      enabled: true,
+      order: orderCount++,
+    });
+  }
+
+  if (healthBackgroundText) {
+    rawSections.push({
+      id: 'healthBackground',
+      title: 'RECORDED HEALTH BACKGROUND',
+      content: healthBackgroundText,
+      enabled: true,
+      order: orderCount++,
+    });
+  }
+
+  if (profileMedsText) {
+    rawSections.push({
+      id: 'profileMedicines',
+      title: 'RECORDED MEDICINES & SUPPLEMENTS',
+      content: profileMedsText,
+      enabled: true,
+      order: orderCount++,
+    });
+  }
+
+  if (lifeEventsText) {
+    rawSections.push({
+      id: 'lifeEvents',
+      title: 'RECORDED LIFE EVENTS & CONTEXT',
+      content: lifeEventsText,
       enabled: true,
       order: orderCount++,
     });

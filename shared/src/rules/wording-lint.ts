@@ -45,6 +45,16 @@ export const FORBIDDEN_PATTERNS: { regex: RegExp; phrase: string; description: s
     phrase: 'diagnostic terms (diagnosis, disorder, disease, pathology, patient)',
     description: 'Banned diagnostic terms. Replace with descriptive terms like "pattern", "check-in", "self-reported", or "observation".',
   },
+  {
+    regex: /\b(?:nothing|no\s+need|no\s+reason|don'?t)\s+to\s+worry\b/i,
+    phrase: 'false reassurance (e.g. "nothing to worry about")',
+    description: 'Avoid medical reassurance. Use descriptive phrasing: "If you are worried, speak to a health professional."',
+  },
+  {
+    regex: /\bnothing\s+to\s+worry\s+about\b/i,
+    phrase: 'nothing to worry about',
+    description: 'Avoid medical reassurance. Use descriptive phrasing: "If you are worried, speak to a health professional."',
+  },
 ];
 
 export interface WordingViolation {

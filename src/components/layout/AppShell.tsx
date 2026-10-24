@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Leaf,
   AlertOctagon,
+  User,
 } from 'lucide-react';
 import { SyncStatusBadge } from '../ui/SyncStatusBadge';
 import { AuthModal } from '../../features/auth/AuthModal';
@@ -29,6 +30,7 @@ import { pinLockService } from '../../lib/safety/pinLock';
 
 const NAV = [
   { to: '/overview', icon: LayoutDashboard, label: 'Overview' },
+  { to: '/profile', icon: User, label: 'About Me' },
   { to: '/journal', icon: BookOpen, label: 'Journal' },
   { to: '/timeline', icon: Clock, label: 'Timeline & Insights' },
   { to: '/consultation', icon: FileText, label: 'Appointment Prep' },
@@ -262,7 +264,6 @@ export function AppShell({
               )?.label ?? 'Health space'}
             </p>
           </div>
-<<<<<<< HEAD
           <div className="flex items-center gap-2.5">
             <QuickEscapeButton />
             <button
@@ -277,7 +278,7 @@ export function AppShell({
             <button
               type="button"
               onClick={onToggleDiscreet}
-              className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:border-plum-200 hover:text-plum-700"
+              className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:border-[#9B72CF] hover:text-[#5B4B8A]"
             >
               {discreetMode ? (
                 <EyeOff className="h-3.5 w-3.5" />
@@ -287,20 +288,6 @@ export function AppShell({
               {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
             </button>
           </div>
-=======
-          <button
-            type="button"
-            onClick={onToggleDiscreet}
-            className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-2 text-xs font-medium text-stone-600 transition hover:border-[#9B72CF] hover:text-[#5B4B8A]"
-          >
-            {discreetMode ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-            {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
-          </button>
->>>>>>> 8836c519b8675b886f9339a0c4b2cc43bbc6a054
         </div>
 
         <main className="page-enter mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 md:p-8 xl:px-10">

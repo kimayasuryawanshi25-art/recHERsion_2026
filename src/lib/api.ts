@@ -128,6 +128,72 @@ class ApiClient {
       }),
   };
 
+  // --- Profile Endpoints ---
+  profile = {
+    get: async () => this.request('/profile'),
+    update: async (data: any) =>
+      this.request('/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    aboutMe: {
+      get: async () => this.request('/profile/about-me'),
+      saveSection: async (sectionKey: string, content: any) =>
+        this.request(`/profile/about-me/${sectionKey}`, {
+          method: 'PUT',
+          body: JSON.stringify({ content }),
+        }),
+    },
+    healthItems: {
+      list: async () => this.request('/profile/health-items'),
+      create: async (data: any) =>
+        this.request('/profile/health-items', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: async (id: string) =>
+        this.request(`/profile/health-items/${id}`, {
+          method: 'DELETE',
+        }),
+    },
+    lifeEvents: {
+      list: async () => this.request('/profile/life-events'),
+      create: async (data: any) =>
+        this.request('/profile/life-events', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: async (id: string) =>
+        this.request(`/profile/life-events/${id}`, {
+          method: 'DELETE',
+        }),
+    },
+    careTeam: {
+      list: async () => this.request('/profile/care-team'),
+      create: async (data: any) =>
+        this.request('/profile/care-team', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: async (id: string) =>
+        this.request(`/profile/care-team/${id}`, {
+          method: 'DELETE',
+        }),
+    },
+    medicines: {
+      list: async () => this.request('/profile/medicines'),
+      create: async (data: any) =>
+        this.request('/profile/medicines', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: async (id: string) =>
+        this.request(`/profile/medicines/${id}`, {
+          method: 'DELETE',
+        }),
+    },
+  };
+
   // --- Summaries & PDF ---
   summaries = {
     interview: async (payload: any) =>

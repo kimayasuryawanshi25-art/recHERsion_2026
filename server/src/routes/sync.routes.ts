@@ -14,7 +14,17 @@ import { cryptoService } from '../services/crypto.service.js';
 
 const OutboxItemSchema = z.object({
   id: z.string(),
-  type: z.enum(['symptom_entry', 'medication', 'appointment', 'screening']),
+  type: z.enum([
+    'symptom_entry',
+    'medication',
+    'appointment',
+    'screening',
+    'profile_section',
+    'health_item',
+    'life_event',
+    'care_team',
+    'medicine_event',
+  ]),
   action: z.enum(['upsert', 'delete']),
   recordId: z.string(),
   clientUpdatedAt: z.string(),

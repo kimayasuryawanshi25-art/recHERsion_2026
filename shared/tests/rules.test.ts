@@ -126,6 +126,13 @@ describe('Wording Linter & Prohibited Phrases', () => {
     expect(lint.violations).toHaveLength(0);
   });
 
+  it('detects and flags false reassurance phrasing', () => {
+    const reassuringSample = 'You recorded mild cramping, so there is nothing to worry about.';
+    const lint = lintWording(reassuringSample);
+    expect(lint.valid).toBe(false);
+    expect(lint.violations.some(v => v.phrase.includes('worry'))).toBe(true);
+  });
+
   it('verifies that all built-in rule outputs pass the wording lint', () => {
     const testDataset: SymptomEntry[] = [
       createMockEntry({ eventDate: '2026-09-01', symptom: 'Hot flash', severity: 4, sleepQuality: 1, mood: 2 }),

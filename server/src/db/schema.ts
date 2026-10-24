@@ -86,7 +86,14 @@ export const medicationEvents = sqliteTable('medication_events', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   nameEncrypted: text('name_encrypted').notNull(),
   dose: text('dose'),
-  takenAt: text('taken_at').notNull(),
+  frequency: text('frequency'),
+  startDate: text('start_date'),
+  stopDate: text('stop_date'),
+  reasonEncrypted: text('reason_encrypted'),
+  prescriber: text('prescriber'),
+  status: text('status').notNull().default('active'),
+  includeInSummary: integer('include_in_summary').notNull().default(1),
+  takenAt: text('taken_at'),
   notesEncrypted: text('notes_encrypted'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
@@ -164,4 +171,64 @@ export const rulesRegistry = sqliteTable('rules_registry', {
   requiredInputs: text('required_inputs').notNull().default('[]'),
   updatedAt: text('updated_at').notNull(),
 });
+
+// --- Phase 11: About Me Living Profile Tables ---
+
+export const profileSections = sqliteTable('profile_sections', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sectionKey: text('section_key').notNull(),
+  contentEncrypted: text('content_encrypted').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+  deletedAt: text('deleted_at'),
+  clientUpdatedAt: text('client_updated_at'),
+});
+
+export const healthItems = sqliteTable('health_items', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  kind: text('kind').notNull(), // condition | surgery | allergy | vaccination
+  label: text('label').notNull(),
+  detailEncrypted: text('detail_encrypted'),
+  status: text('status').notNull().default('known'), // known | unknown | declined
+  recordedDate: text('recorded_date'),
+  stoppedDate: text('stopped_date'),
+  includeInSummary: integer('include_in_summary').notNull().default(1),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+  deletedAt: text('deleted_at'),
+  clientUpdatedAt: text('client_updated_at'),
+});
+
+export const lifeEvents = sqliteTable('life_events', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  date: text('date').notNull(),
+  category: text('category').notNull().default('other'),
+  notesEncrypted: text('notes_encrypted'),
+  includeInSummary: integer('include_in_summary').notNull().default(1),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+  deletedAt: text('deleted_at'),
+  clientUpdatedAt: text('client_updated_at'),
+});
+
+export const careTeam = sqliteTable('care_team', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  role: text('role').notNull().default('gp'),
+  clinic: text('clinic'),
+  phoneEncrypted: text('phone_encrypted'),
+  emailEncrypted: text('email_encrypted'),
+  notesEncrypted: text('notes_encrypted'),
+  includeInSummary: integer('include_in_summary').notNull().default(1),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+  deletedAt: text('deleted_at'),
+  clientUpdatedAt: text('client_updated_at'),
+});
+
 

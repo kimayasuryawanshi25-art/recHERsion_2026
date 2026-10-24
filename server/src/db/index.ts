@@ -174,6 +174,63 @@ export async function initDatabase(): Promise<void> {
       required_inputs TEXT NOT NULL DEFAULT '[]',
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS profile_sections (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      section_key TEXT NOT NULL,
+      content_encrypted TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      client_updated_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS health_items (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      label TEXT NOT NULL,
+      detail_encrypted TEXT,
+      status TEXT NOT NULL DEFAULT 'known',
+      recorded_date TEXT,
+      stopped_date TEXT,
+      include_in_summary INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      client_updated_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS life_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      date TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'other',
+      notes_encrypted TEXT,
+      include_in_summary INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      client_updated_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS care_team (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'gp',
+      clinic TEXT,
+      phone_encrypted TEXT,
+      email_encrypted TEXT,
+      notes_encrypted TEXT,
+      include_in_summary INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      client_updated_at TEXT
+    );
   `);
 
   // Migrate existing tables if needed
@@ -181,6 +238,24 @@ export async function initDatabase(): Promise<void> {
     await client.execute(`ALTER TABLE consultation_summaries ADD COLUMN sections TEXT NOT NULL DEFAULT '[]';`);
   } catch {
     // Column already exists
+  }
+
+  // Medication events columns migrations
+  const medCols = [
+    'frequency TEXT',
+    'start_date TEXT',
+    'stop_date TEXT',
+    'reason_encrypted TEXT',
+    'prescriber TEXT',
+    "status TEXT NOT NULL DEFAULT 'active'",
+    'include_in_summary INTEGER NOT NULL DEFAULT 1',
+  ];
+  for (const col of medCols) {
+    try {
+      await client.execute(`ALTER TABLE medication_events ADD COLUMN ${col};`);
+    } catch {
+      // Column already exists
+    }
   }
 
   // Seed rules registry from shared registry if not present

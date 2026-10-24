@@ -40,11 +40,7 @@ export function OverviewPage() {
         {[
           { label: 'Check-ins', value: entries.length, icon: BookOpen, color: 'text-plum-600 bg-plum-50' },
           { label: 'Symptoms tracked', value: uniqueSymptoms.length, icon: TrendingUp, color: 'text-teal-600 bg-teal-50' },
-<<<<<<< HEAD
           { label: 'Days covered', value: new Set(entries.map(e => getEntryDate(e)).filter(Boolean)).size, icon: Clock, color: 'text-rose-600 bg-rose-50' },
-=======
-          { label: 'Days covered', value: new Set(entries.map(e => e.date)).size, icon: Clock, color: 'text-[#5B4B8A] bg-rose-50' },
->>>>>>> 8836c519b8675b886f9339a0c4b2cc43bbc6a054
           { label: 'Date range', value: entries.length > 0 ? `${new Date(start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '—', icon: BarChart3, color: 'text-amber-600 bg-amber-50' },
         ].map(s => (
           <div key={s.label} className="rounded-2xl border border-white/80 bg-white/75 p-4 shadow-sm shadow-violet-900/5 backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
