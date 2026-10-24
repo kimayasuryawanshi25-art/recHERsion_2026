@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, HeartHandshake } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, HeartHandshake, Mic } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -10,6 +10,7 @@ import {
 } from '../../types/health';
 import { saveEntry, getEntry, deleteEntry, getSettings } from '../../lib/db';
 import { detectCrisisLanguage } from '../../lib/safety/crisisKeywords';
+import { VoiceDiaryModal } from './VoiceDiaryModal';
 
 interface Props { editMode?: boolean; }
 
@@ -21,6 +22,7 @@ export function EntryForm({ editMode = false }: Props) {
   const [showDelete, setShowDelete] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [contexts, setContexts] = useState<HealthContextId[]>([]);
 
@@ -173,7 +175,19 @@ export function EntryForm({ editMode = false }: Props) {
           </div>
 
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Symptom or Experience <span className="text-rose-500">*</span></label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Symptom or Experience <span className="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowVoiceModal(true)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-plum-600 hover:text-plum-800 transition"
+              >
+                <Mic className="h-3.5 w-3.5" />
+                Voice Diary
+              </button>
+            </div>
             <input type="text" value={form.symptom} onChange={e => update('symptom', e.target.value)}
               placeholder="e.g., Headache, Fatigue, Hot flash"
               className={`w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-plum-300 ${errors.symptom ? 'border-red-400' : 'border-sand-200'}`}
@@ -295,6 +309,22 @@ export function EntryForm({ editMode = false }: Props) {
 
       <ConfirmDialog open={showDelete} onClose={() => setShowDelete(false)} onConfirm={handleDelete}
         title="Delete Check-in" message="This will permanently remove this entry." confirmLabel="Delete" variant="danger"
+      />
+
+      <VoiceDiaryModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onConfirmText={(spoken) => {
+          if (!form.symptom.trim() && spoken.length < 40) {
+            update('symptom', spoken);
+          } else {
+            if (!form.symptom.trim()) {
+              update('symptom', spoken.slice(0, 30));
+            }
+            update('notes', form.notes ? `${form.notes}\n${spoken}` : spoken);
+            setShowMore(true);
+          }
+        }}
       />
     </div>
   );

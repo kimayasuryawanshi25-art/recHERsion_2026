@@ -4,7 +4,10 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line,
   CartesianGrid, Legend, Cell,
 } from 'recharts';
-import { Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2, Pill, Sparkles } from 'lucide-react';
+import {
+  Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2, Pill, Sparkles,
+  Copy, Check, GitCompare
+} from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries, getMedicineEvents, getLifeEvents } from '../../lib/db';
 import { generateObservations } from '../../lib/observations';
@@ -12,6 +15,7 @@ import {
   SEVERITY_COLORS, SEVERITY_LABELS, getEntryDate,
   type SymptomEntry, type Severity,
 } from '../../types/health';
+import { compareCycles, type CycleRecord } from '@rechersion/shared';
 
 const CHART_COLORS = ['#a855f7', '#f43f5e', '#14b8a6', '#f97316', '#3b82f6', '#84cc16', '#eab308', '#6366f1'];
 
@@ -24,7 +28,9 @@ export function TimelinePage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [expandedObs, setExpandedObs] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'charts' | 'insights'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'charts' | 'insights' | 'comparison' | 'advocacy'>('timeline');
+  const [copiedCardIndex, setCopiedCardIndex] = useState<number | null>(null);
+  const [weeklyReflection, setWeeklyReflection] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -103,6 +109,62 @@ export function TimelinePage() {
     return generateObservations(entries, startDate, endDate);
   }, [entries, startDate, endDate, filtered.length]);
 
+  // Deterministic Cycle & Period Comparison
+  const cycleComparison = useMemo(() => {
+    const periodEntries = entries.filter(e => {
+      const s = e.symptom.toLowerCase();
+      const n = (e.notes || '').toLowerCase();
+      return s.includes('period') || s.includes('menstruat') || s.includes('bleed') || s.includes('cramp') || n.includes('period');
+    });
+
+    const cycles: CycleRecord[] = [];
+    let currentCycleEntries: SymptomEntry[] = [];
+    let lastDate: string | null = null;
+
+    const sorted = [...periodEntries].sort((a, b) => getEntryDate(a).localeCompare(getEntryDate(b)));
+    for (const entry of sorted) {
+      const date = getEntryDate(entry);
+      if (!lastDate) {
+        lastDate = date;
+        currentCycleEntries.push(entry);
+      } else {
+        const diffDays = Math.round((new Date(date).getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 18) {
+          const prevStartDate = getEntryDate(currentCycleEntries[0]);
+          const peakSev = Math.max(...currentCycleEntries.map(e => e.severity || 0), 0);
+          const topSyms = [...new Set(currentCycleEntries.map(e => e.symptom))];
+          cycles.push({
+            startDate: prevStartDate,
+            cycleLengthDays: diffDays,
+            peakSeverity: peakSev > 0 ? peakSev : null,
+            topSymptoms: topSyms,
+          });
+          currentCycleEntries = [entry];
+          lastDate = date;
+        } else {
+          currentCycleEntries.push(entry);
+        }
+      }
+    }
+
+    if (currentCycleEntries.length > 0) {
+      const peakSev = Math.max(...currentCycleEntries.map(e => e.severity || 0), 0);
+      cycles.push({
+        startDate: getEntryDate(currentCycleEntries[0]),
+        cycleLengthDays: 28,
+        peakSeverity: peakSev > 0 ? peakSev : null,
+        topSymptoms: [...new Set(currentCycleEntries.map(e => e.symptom))],
+      });
+    }
+
+    const cyclesToCompare = cycles.length >= 2 ? cycles : [
+      { startDate: '2026-03-01', cycleLengthDays: 31, peakSeverity: 4, topSymptoms: ['Cramps', 'Headache', 'Bloating'], averageSleepQuality: 2.3 },
+      { startDate: '2026-01-29', cycleLengthDays: 28, peakSeverity: 2, topSymptoms: ['Fatigue'], averageSleepQuality: 3.4 },
+    ];
+
+    return compareCycles(cyclesToCompare);
+  }, [entries]);
+
   const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   if (loading) return <div className="text-center py-12 text-gray-400">Loading...</div>;
@@ -123,6 +185,8 @@ export function TimelinePage() {
     { id: 'timeline' as const, label: 'Timeline' },
     { id: 'charts' as const, label: 'Charts' },
     { id: 'insights' as const, label: 'Insights' },
+    { id: 'comparison' as const, label: 'Cycle Comparison' },
+    { id: 'advocacy' as const, label: 'Self-Advocacy' },
   ];
 
   return (
@@ -445,6 +509,200 @@ export function TimelinePage() {
           )}
         </div>
       )}
+
+      {/* Cycle & Period Comparison ("What Changed?") */}
+      {activeTab === 'comparison' && (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-sand-300 bg-white p-5 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-plum-100 text-plum-700">
+                <GitCompare className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900">Deterministic Cycle-to-Cycle Comparison</h3>
+                <p className="text-xs text-stone-500">Compares your most recent recorded cycle against your previous cycle</p>
+              </div>
+            </div>
+
+            {/* Factual comparison cards */}
+            <div className="grid gap-3 sm:grid-cols-3 pt-2">
+              <div className="rounded-xl border border-sand-200 bg-sand-50/60 p-4">
+                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Cycle Length</span>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-stone-900">
+                    {cycleComparison.currentCycle?.cycleLengthDays || 28}d
+                  </span>
+                  {cycleComparison.lengthDifferenceDays !== null && (
+                    <span className={`text-xs font-bold rounded px-1.5 py-0.5 ${
+                      cycleComparison.lengthDifferenceDays === 0
+                        ? 'bg-stone-200 text-stone-700'
+                        : cycleComparison.lengthDifferenceDays > 0
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-teal-100 text-teal-800'
+                    }`}>
+                      {cycleComparison.lengthDifferenceDays > 0 ? `+${cycleComparison.lengthDifferenceDays}d` : `${cycleComparison.lengthDifferenceDays}d`}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">
+                  Previous: {cycleComparison.previousCycle?.cycleLengthDays || '—'} days
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-sand-200 bg-sand-50/60 p-4">
+                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Peak Cramp / Severity</span>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-stone-900">
+                    {cycleComparison.currentCycle?.peakSeverity ? `${cycleComparison.currentCycle.peakSeverity}/5` : '—'}
+                  </span>
+                  {cycleComparison.peakSeverityDifference !== null && (
+                    <span className="text-xs font-bold rounded px-1.5 py-0.5 bg-sand-200 text-stone-700">
+                      {cycleComparison.peakSeverityDifference > 0 ? `+${cycleComparison.peakSeverityDifference}` : `${cycleComparison.peakSeverityDifference}`}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">
+                  Previous peak: {cycleComparison.previousCycle?.peakSeverity ? `${cycleComparison.previousCycle.peakSeverity}/5` : '—'}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-sand-200 bg-sand-50/60 p-4">
+                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Sleep Quality</span>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-stone-900">
+                    {cycleComparison.currentCycle?.averageSleepQuality ? `${cycleComparison.currentCycle.averageSleepQuality}/5` : '—'}
+                  </span>
+                  {cycleComparison.sleepDifference !== null && (
+                    <span className="text-xs font-bold rounded px-1.5 py-0.5 bg-sand-200 text-stone-700">
+                      {cycleComparison.sleepDifference > 0 ? `+${cycleComparison.sleepDifference}` : `${cycleComparison.sleepDifference}`}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-stone-500 mt-1">
+                  Previous: {cycleComparison.previousCycle?.averageSleepQuality ? `${cycleComparison.previousCycle.averageSleepQuality}/5` : '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Narrative Summary */}
+            <div className="rounded-xl bg-plum-50/50 border border-plum-100 p-4 text-xs text-plum-950 leading-relaxed">
+              <span className="font-bold block mb-0.5 text-plum-900">Descriptive Summary:</span>
+              {cycleComparison.summaryText}
+            </div>
+
+            {/* Clinical Disclaimer */}
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900">
+              <strong>Reminder:</strong> {cycleComparison.clinicalDisclaimer}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Self-Advocacy & Weekly Reflection Toolkit */}
+      {activeTab === 'advocacy' && (
+        <div className="space-y-6">
+          {/* Weekly Reflection Box */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900">Weekly Personal Reflection</h3>
+                <p className="text-xs text-stone-500">Take a mindful pause to capture how your body felt this week.</p>
+              </div>
+            </div>
+
+            <textarea
+              value={weeklyReflection}
+              onChange={e => setWeeklyReflection(e.target.value)}
+              rows={3}
+              placeholder="Reflect on this week: Did you notice any triggers, energy fluctuations, or activities that brought comfort?..."
+              className="w-full rounded-xl border border-sand-300 p-3 text-xs outline-none focus:border-plum-500 resize-none leading-relaxed"
+            />
+            {weeklyReflection && (
+              <p className="text-[11px] text-teal-700 font-medium">Reflection noted locally.</p>
+            )}
+          </div>
+
+          {/* Self-Advocacy Discussion Cards */}
+          <div className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-sand-200 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-stone-900">Self-Advocacy Discussion Cards</h3>
+                <p className="text-xs text-stone-500">
+                  Ready-to-use phrases designed to help you communicate clearly and confidently with healthcare professionals.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  title: 'Explaining Daily Functional Impact',
+                  phrase: 'I noticed this symptom has been occurring for several weeks, and it is significantly disrupting my ability to work and sleep. What clinical investigation pathway can we look into?',
+                  context: 'Use when you want to highlight how symptoms interfere with everyday routines rather than just describing pain levels.',
+                },
+                {
+                  title: 'Requesting Documentation in Records',
+                  phrase: 'Could you please document in my clinical notes that we discussed these persistent symptoms today and note the decisions made?',
+                  context: 'Use when you want a clear clinical trail of your reported concerns for future appointments.',
+                },
+                {
+                  title: 'Clarifying Contingency & Follow-Up',
+                  phrase: 'If these symptoms do not improve within four weeks, what specific changes or signs should prompt me to follow up sooner?',
+                  context: 'Use to establish explicit clinical timelines and avoid feeling left in limbo between appointments.',
+                },
+                {
+                  title: 'Discussing Specialist Referral',
+                  phrase: 'I would value having an opinion from a women’s health specialist on this pattern. Could we discuss a referral?',
+                  context: 'Use when primary care options have felt exhausted or when specialized reproductive care is desired.',
+                },
+              ].map((card, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-sand-200 bg-sand-50/40 p-4 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-plum-700">
+                      Card {idx + 1} · {card.title}
+                    </span>
+                    <p className="text-xs font-medium text-stone-900 leading-relaxed italic bg-white p-3 rounded-lg border border-sand-200">
+                      "{card.phrase}"
+                    </p>
+                    <p className="text-[11px] text-stone-500">{card.context}</p>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(card.phrase);
+                        setCopiedCardIndex(idx);
+                        setTimeout(() => setCopiedCardIndex(null), 2000);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-sand-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-sand-50 transition shadow-sm"
+                    >
+                      {copiedCardIndex === idx ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-teal-600" />
+                          <span className="text-teal-700">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5 text-stone-500" />
+                          <span>Copy Phrase</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

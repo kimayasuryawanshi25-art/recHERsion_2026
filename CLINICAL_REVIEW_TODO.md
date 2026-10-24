@@ -49,3 +49,13 @@ This living register records every piece of medical content, triage guideline, s
 | CR-15-01 | 4-Quadrant Rapid Clinical Scan | Four structured quadrants (Primary Concerns & Timing, Daily Functional Impact, Recorded Health Background, Priority Questions) for rapid 10-15 minute GP consults. | RACGP General Practice Standards; Australian Digital Health Agency (ADHA) Event Summaries | Pending Clinical Review | Verify that the 4-quadrant layout delivers critical clinical context within 30 seconds of GP review. |
 | CR-15-02 | Simulated Teleconsult Rehearsal Scripts | Interactive dialogue prompts and patient advocacy tips (e.g., stating primary impact in first 60 seconds) with explicit "DEMO ONLY" banner. | Healthdirect Australia Telehealth Guidelines; RACGP Telehealth Standards | Pending Clinical Review | Review simulated dialogue to ensure advice empowers patient communication without predetermining diagnoses. |
 | CR-15-03 | Records Vault Categories & Scopes | Document categories (Pathology / Blood Test, Ultrasound / Imaging, Specialist Letter, Prescription, Other) stored privately in local IndexedDB. | Australian Privacy Principles (APPs); ADHA My Health Record document categorization | Pending Clinical Review | Confirm that document categories match standard clinical classifications in Australian primary care. |
+
+---
+
+## Phase 16: Voice Diary, Period Comparison & Self-Advocacy
+
+| ID | Item / Feature | Proposed Text / Logic | Sourced Authority / Basis | Status | Reviewer Notes |
+|---|---|---|---|---|---|
+| CR-16-01 | Cycle-to-Cycle Comparison Metrics | Mathematical calculation of differences in cycle length (days), cramp severity (1-5), and sleep quality without diagnosing ovulatory disorders. | RANZCOG Guidelines on Menstrual Irregularities; RACGP Menstrual Health | Pending Clinical Review | Review cycle variance thresholds to ensure statements remain factual and non-alarmist. |
+| CR-16-02 | Voice Journal Human-in-the-Loop Review | Mandatory raw text review box allowing users to edit and confirm transcriptions before entry persistence; en-AU, hi-IN, mr-IN speech models. | ACSQHC Clinical Documentation Integrity Guidance | Pending Clinical Review | Verify that speech transcription accuracy safeguards prevent garbled medical terminology from entering records. |
+| CR-16-03 | Self-Advocacy Discussion Phrases | Pre-formulated conversational statements for patient self-advocacy (daily impact, documentation request, follow-up contingencies, referrals). | Australian Charter of Healthcare Rights (Second Edition); RACGP Patient-Centered Care Guidelines | Pending Clinical Review | Confirm that phrasing encourages constructive clinical collaboration without creating adversarial tone. |
