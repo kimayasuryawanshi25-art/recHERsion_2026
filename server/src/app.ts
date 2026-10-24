@@ -4,6 +4,11 @@ import { authRoutes } from './routes/auth.routes.js';
 import { healthRoutes } from './routes/health.routes.js';
 import { initDatabase } from './db/index.js';
 
+import { profileRoutes } from './routes/profile.routes.js';
+import { moduleRoutes } from './routes/modules.routes.js';
+import { entriesRoutes } from './routes/entries.routes.js';
+import { clinicalRoutes } from './routes/clinical.routes.js';
+
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
     logger: false,
@@ -19,6 +24,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Register routes under /api/v1
   await app.register(healthRoutes, { prefix: '/api/v1' });
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
+  await app.register(profileRoutes, { prefix: '/api/v1' });
+  await app.register(moduleRoutes, { prefix: '/api/v1' });
+  await app.register(entriesRoutes, { prefix: '/api/v1' });
+  await app.register(clinicalRoutes, { prefix: '/api/v1' });
 
   return app;
 }
