@@ -140,7 +140,7 @@ export async function clinicalRoutes(app: FastifyInstance): Promise<void> {
       specialty: data.specialty ?? null,
       questionsEncrypted: cryptoService.encryptField(data.questions),
       notesEncrypted: cryptoService.encryptField(data.notes),
-      followUpPlanEncrypted: cryptoService.encryptField(data.followUpPlanEncrypted || data.followUpPlan),
+      followUpPlanEncrypted: cryptoService.encryptField(data.followUpPlan),
       createdAt: now,
       updatedAt: now,
       deletedAt: null,

@@ -63,7 +63,7 @@ export async function registerSecurityPlugins(app: FastifyInstance): Promise<voi
   });
 
   // 7. Centralized Sanitized Error Handler
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error: any, request, reply) => {
     // Log internal error safely without health content
     app.log.error({
       msg: 'Server error encountered',

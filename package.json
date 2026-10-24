@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "dev:server": "npm --workspace=@rechersion/server run dev",
+    "build:all": "npm --workspace=@rechersion/server run build && npm run build",
     "test": "npm run test:shared && npm run test:server",
     "test:shared": "npm --workspace=@rechersion/shared test",
     "test:server": "npm --workspace=@rechersion/server test",
