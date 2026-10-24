@@ -14,6 +14,7 @@ import { PrivacyPage } from './features/privacy/PrivacyPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { PublicSharePage } from './features/consultation/PublicSharePage';
 import { AboutMePage } from './features/profile/AboutMePage';
+import { CareNavigatorPage } from './features/navigator/CareNavigatorPage';
 import { getSettings, saveSettings } from './lib/db';
 import type { UserSettings } from './types/health';
 
@@ -95,6 +96,7 @@ export default function App() {
               <Routes>
                 <Route path="/overview" element={<OverviewPage />} />
                 <Route path="/profile" element={<AboutMePage />} />
+                <Route path="/navigator" element={<CareNavigatorPage />} />
                 <Route path="/journal" element={<JournalPage />} />
                 <Route path="/journal/new" element={<EntryForm />} />
                 <Route

@@ -12,3 +12,14 @@ This living register records every piece of medical content, triage guideline, s
 | CR-11-02 | Consultation Summary Background Formatting | Presenting self-reported conditions, allergies, and medicines strictly as "RECORDED HEALTH BACKGROUND" without inferring contraindications. | Australian Digital Health Agency (ADHA) Event Summary format | Pending Clinical Review | Clinicians should verify readability in rapid 15-minute consultations. |
 | CR-11-03 | Timeline Context Markers | Labeling medicines and life events strictly as "Context marker — recorded by you" without causal claims. | AGENTS.md non-inferential design rule | Pending Clinical Review | Verify that separation between symptoms and context is evident to clinicians reading exported histories. |
 | CR-11-04 | Preventive Screening Linking | "History needed to personalize" prompt on breast/cervical screening when family history is unrecorded. | Australian National Cervical Screening Program & BreastScreen Australia | Pending Clinical Review | Ensure users understand this is informational guidance rather than an individual risk calculation. |
+
+---
+
+## Phase 12: Care Navigator (Triage, Red Flags & Clinical Questions)
+
+| ID | Item / Feature | Proposed Text / Logic | Sourced Authority / Basis | Status | Reviewer Notes |
+|---|---|---|---|---|---|
+| CR-12-01 | Red Flag Criteria & Triage Tiers | Acute chest pain/dyspnoea, bleeding in pregnancy, acute pelvic pain in pregnancy, and presyncope with bleeding triaged as Emergency; isolated heavy bleeding (>2 pads/hr) or high fever with rigors as Urgent (12–24h). | WHO ETAT Emergency Triage Guidelines; Healthdirect Australia Clinical Symptom Checker | Pending Clinical Review | Review thresholds for obstetric/gynaecologic emergency vs urgent walk-in. |
+| CR-12-02 | What to Ask Your Clinician Prompts | Generated checklists for emergency (imaging/admission), urgent (blood tests, pain relief), routine (symptom diary), and self-care visits. | RACGP General Practice Consultation Guidelines | Pending Clinical Review | Verify prompt relevance across varied clinical backgrounds. |
+| CR-12-03 | Mandatory Safe Default Language | Strict ban on false reassurance ("nothing to worry about"); mandatory default: "If you are worried, speak to a health professional." | AGENTS.md Safe Wording & Linter Rule | Pending Clinical Review | Confirmed compliant with non-diagnostic and non-reassurance criteria. |
+

@@ -20,6 +20,7 @@ import {
   Leaf,
   AlertOctagon,
   User,
+  Compass,
 } from 'lucide-react';
 import { SyncStatusBadge } from '../ui/SyncStatusBadge';
 import { AuthModal } from '../../features/auth/AuthModal';
@@ -31,6 +32,7 @@ import { pinLockService } from '../../lib/safety/pinLock';
 const NAV = [
   { to: '/overview', icon: LayoutDashboard, label: 'Overview' },
   { to: '/profile', icon: User, label: 'About Me' },
+  { to: '/navigator', icon: Compass, label: 'Care Navigator' },
   { to: '/journal', icon: BookOpen, label: 'Journal' },
   { to: '/timeline', icon: Clock, label: 'Timeline & Insights' },
   { to: '/consultation', icon: FileText, label: 'Appointment Prep' },

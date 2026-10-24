@@ -273,6 +273,15 @@ class ApiClient {
         body: JSON.stringify({ entryIds, promptContext }),
       }),
   };
+
+  // --- Care Navigator ---
+  navigator = {
+    assess: async (inputs: any) =>
+      this.request('/navigator/assess', {
+        method: 'POST',
+        body: JSON.stringify(inputs),
+      }),
+  };
 }
 
 export const api = new ApiClient();
