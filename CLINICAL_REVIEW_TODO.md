@@ -23,3 +23,14 @@ This living register records every piece of medical content, triage guideline, s
 | CR-12-02 | What to Ask Your Clinician Prompts | Generated checklists for emergency (imaging/admission), urgent (blood tests, pain relief), routine (symptom diary), and self-care visits. | RACGP General Practice Consultation Guidelines | Pending Clinical Review | Verify prompt relevance across varied clinical backgrounds. |
 | CR-12-03 | Mandatory Safe Default Language | Strict ban on false reassurance ("nothing to worry about"); mandatory default: "If you are worried, speak to a health professional." | AGENTS.md Safe Wording & Linter Rule | Pending Clinical Review | Confirmed compliant with non-diagnostic and non-reassurance criteria. |
 
+---
+
+## Phase 13: Care Finder & Crisis Helplines
+
+| ID | Item / Feature | Proposed Text / Logic | Sourced Authority / Basis | Status | Reviewer Notes |
+|---|---|---|---|---|---|
+| CR-13-01 | Helpline Categorization & Scope | Grouping helplines into 24/7 emergency, domestic violence (1800RESPECT), perinatal (PANDA), First Nations (13YARN), LGBTQIA+ (QLife), and crisis support (Lifeline/Beyond Blue). | Australian Department of Health & Aged Care National Helplines Register | Pending Clinical Review | Review helpline operating hours and triage boundaries. |
+| CR-13-02 | Trusted Contact Pre-Drafted Message | "Hi [Name], I am using my health organizer app and wanted to let you know I may need some support right now. Could you check in on me?" with double confirmation. | Trauma-informed safety protocol; AGENTS.md rule | Pending Clinical Review | Verify that wording avoids generating panic while effectively requesting social support. |
+| CR-13-03 | Care Directory Verified Badge Rules | Requiring explicit `sourceUrl` and `verifiedOn` timestamp on every listed health clinic, bulk-billing clinic, and hospital ED. | AGENTS.md Directory Verifiability Rule | Pending Clinical Review | Verify that annual re-verification policy is sufficient for clinical referral accuracy. |
+
+

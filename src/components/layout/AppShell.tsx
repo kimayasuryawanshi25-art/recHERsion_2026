@@ -21,6 +21,7 @@ import {
   AlertOctagon,
   User,
   Compass,
+  MapPin,
 } from 'lucide-react';
 import { SyncStatusBadge } from '../ui/SyncStatusBadge';
 import { AuthModal } from '../../features/auth/AuthModal';
@@ -33,6 +34,7 @@ const NAV = [
   { to: '/overview', icon: LayoutDashboard, label: 'Overview' },
   { to: '/profile', icon: User, label: 'About Me' },
   { to: '/navigator', icon: Compass, label: 'Care Navigator' },
+  { to: '/finder', icon: MapPin, label: 'Care Finder' },
   { to: '/journal', icon: BookOpen, label: 'Journal' },
   { to: '/timeline', icon: Clock, label: 'Timeline & Insights' },
   { to: '/consultation', icon: FileText, label: 'Appointment Prep' },

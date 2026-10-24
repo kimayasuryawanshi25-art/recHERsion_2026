@@ -282,6 +282,22 @@ class ApiClient {
         body: JSON.stringify(inputs),
       }),
   };
+
+  // --- Care Finder & Helplines ---
+  finder = {
+    helplines: async (category?: string) =>
+      this.request(`/finder/helplines${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+    providers: async (params?: Record<string, any>) => {
+      const q = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+        });
+      }
+      const qs = q.toString();
+      return this.request(`/finder/providers${qs ? `?${qs}` : ''}`);
+    },
+  };
 }
 
 export const api = new ApiClient();
