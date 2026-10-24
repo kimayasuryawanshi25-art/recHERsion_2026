@@ -48,44 +48,70 @@
 recHERsion_2026/
 ├── shared/                         # @rechersion/shared (Zero-dependency core logic)
 │   ├── src/
-│   │   ├── schemas/                # Strict Zod schemas for all domain entities
-│   │   ├── rules/                  # Deterministic observation rules (menstrual, wellbeing, etc.)
+│   │   ├── schemas/                # Strict Zod schemas for all domain entities (profile, debrief, navigator, etc.)
+│   │   ├── rules/                  # Deterministic observation rules (menstrual, wellbeing, cycle-comparison)
+│   │   │   ├── cycle/              # Deterministic cycle & period variance comparison engine
 │   │   │   ├── preventive/         # Australian preventive screening guidelines pack (au.json)
 │   │   │   └── wording-lint.ts     # Objective phrasing linter & banned terms scanner
 │   │   └── types/                  # Universal TypeScript interfaces
-│   └── tests/                      # Vitest test suite for rules & screening state machines
+│   └── tests/                      # 28 tests (rules, preventive, cycle comparison, navigator, i18n wording)
 │
 ├── server/                         # @rechersion/server (Optional sync & cloud backend)
 │   ├── src/
-│   │   ├── db/                     # Drizzle ORM schema & LibSQL client
+│   │   ├── db/                     # Drizzle ORM schema (profile, debriefs, followups, appointments, vault)
 │   │   ├── services/
 │   │   │   ├── crypto.service.ts   # AES-256-GCM field encryption & Argon2id hashing
 │   │   │   ├── summary.service.ts  # Consultation summary compiler & PDFKit generator
 │   │   │   └── ai.service.ts       # Consent-gated Anthropic Messages API scribe
-│   │   ├── routes/                 # Fastify REST endpoints (auth, sync, clinical, share, ai)
+│   │   ├── routes/                 # Fastify REST endpoints (profile, navigator, finder, debrief, share, sync)
 │   │   └── plugins/                # CSRF protection, session cookies, rate-limiting, security
-│   └── tests/                      # 10 test suites covering multi-tenancy, crypto, sync, and AI
+│   └── tests/                      # 14 test suites with 50 passing tests covering all routes and security
 │
-├── src/                            # Frontend Web Application (React 19 + Vite + Tailwind v4)
+├── src/                            # Frontend Web Application (React 19 + Vite + Tailwind v4 + PWA)
 │   ├── components/
-│   │   ├── layout/AppShell.tsx     # Navigation shell with Quick Escape & Urgent Care trigger
-│   │   └── ui/                     # PinLockModal, UrgentCarePanel, QuickEscapeButton
+│   │   ├── layout/AppShell.tsx     # Navigation shell with Language Selector, Quick Escape & Urgent Care
+│   │   └── ui/                     # PinLockModal, UrgentCarePanel, QuickEscapeButton, SyncStatusBadge
 │   ├── features/
-│   │   ├── onboarding/             # Context selection & local-first disclosure
-│   │   ├── journal/                # CRUD journal with distress keyword detection
-│   │   ├── timeline/               # Interactive Recharts & visual timeline gap indicators
-│   │   ├── consultation/           # 6-step interview, share dialog, public share view (/s/:token)
-│   │   ├── preventive/             # Australian preventive care tracking
+│   │   ├── profile/                # Personal Profile ("About Me") with 10 living sections
+│   │   ├── navigator/              # Care Navigator deterministic triage & clinician checklist
+│   │   ├── finder/                 # Care Finder directory, crisis helplines & trusted contact alert
+│   │   ├── journal/                # Voice Diary (EN/HI/MR) & CRUD journal with distress detection
+│   │   ├── timeline/               # Interactive Recharts, Cycle-to-Cycle comparison & Self-Advocacy cards
+│   │   ├── consultation/           # 3-Stage Appointment Loop (Prep, Checklist, Debrief & Follow-Ups)
+│   │   ├── teleconsult/            # Simulated Teleconsultation advocacy rehearsal (Rule 11)
+│   │   ├── vault/                  # Local Encrypted Records Vault (IDB store with category filtering)
+│   │   ├── preventive/             # Australian preventive care tracking linked with health history
 │   │   └── settings/               # Discreet mode, PIN lock, and cloud sync/auth
 │   └── lib/
-│       ├── db/                     # IndexedDB v2 wrapper with outbox queue
+│       ├── db/                     # IndexedDB v5 wrapper (outbox, symptomEntries, recordsVault)
+│       ├── i18n/                   # Multi-language translation dictionaries & context (EN, HI, MR)
 │       ├── sync/                   # Background sync engine with exponential backoff
 │       └── safety/                 # Crisis keywords (000, Lifeline) and PBKDF2 PIN lock
 │
+├── public/                         # PWA Web App Manifest (manifest.json) & Service Worker (sw.js)
 ├── Dockerfile                      # Production client container
 ├── docker-compose.yml              # Local-first full stack composition
 └── server/Dockerfile               # Production Fastify container
 ```
+
+---
+
+## 🌟 Comprehensive 18-Phase Implementation
+
+1. **Phase 0–1**: Monorepo architecture (`shared`, `server`, `client`) and strict non-inferential Zod schemas.
+2. **Phase 2–3**: Fastify backend with multi-tenant Argon2id auth and AES-256-GCM field encryption.
+3. **Phase 4–5**: Bidirectional background sync engine with IndexedDB outbox queue and conflict resolution.
+4. **Phase 6–7**: Deterministic observation engine with explicit limitations, evidence trails, and Australian preventive screening pack (`au.json`).
+5. **Phase 8–9**: Clinical consultation summaries, vector PDFKit exports, and cryptographically secure revocable share links (`/s/:token`).
+6. **Phase 10**: Safety UI, Quick Escape (`Esc` redirect to `bom.gov.au`), PBKDF2 PIN lock, and optional consent-gated AI medical scribe.
+7. **Phase 11**: Personal Profile ("About Me") with 10 living sections, explicit null semantics, timeline context markers, and preventive care history linkage.
+8. **Phase 12**: Care Navigator non-diagnostic triage engine (`emergency`, `urgent`, `routine`, `self_care`) with red flags and "What to ask your clinician" checklist.
+9. **Phase 13**: Care Finder clinic directory with verified badges (`sourceUrl`, `verifiedOn`), crisis helplines, and double-confirmed trusted-contact alert modal.
+10. **Phase 14**: 3-Stage Appointment Care Loop (Before Visit prep, In-Consultation real-time checklist, and After Visit debrief & follow-up tracking with medication refill counters).
+11. **Phase 15**: Clinician Read-Only Brief (4-Quadrant rapid scan layout at `/c/:token`), Simulated Teleconsultation mode (advocacy rehearsal under Rule 11), and Local Encrypted Records Vault.
+12. **Phase 16**: Multi-language Voice Diary (Web Speech API for EN, HI, MR with mandatory human review), Cycle-to-Cycle comparison engine, and Self-Advocacy card deck.
+13. **Phase 17**: Multi-Language support (English, हिन्दी, मराठी), WCAG 2.1 AA Accessibility landmarks & skip link, and Progressive Web App (PWA) offline service worker.
+14. **Phase 18**: Monorepo hardening, zero health data leakage audit, clinical review register completion, and production documentation.
 
 ---
 
@@ -95,7 +121,8 @@ recHERsion_2026/
 - **Compassionate Distress Detection**: Non-blocking banner appears if journal notes mention acute distress or self-harm terms, offering Australian 24/7 crisis support (**Lifeline 13 11 14**, **1800RESPECT 1800 737 732**, **Beyond Blue 1300 22 4636**).
 - **Quick Escape Button**: Dedicated header button and `Esc` key shortcut immediately clears `sessionStorage` and replaces the window location with `https://www.bom.gov.au` (Bureau of Meteorology) to protect users in shared or unsafe spaces.
 - **WebCrypto PBKDF2 PIN Lock**: Local 4–6 digit PIN hashed with 100,000 rounds of PBKDF2/SHA-256 with a unique cryptographic salt. Automatically locks the screen after 5 minutes of inactivity.
-- **Time-Limited Revocable Share Links**: Generate cryptographically random 32-byte share URLs (`/s/:token`) for healthcare providers with 1–30 day expirations, view counters (1–10 views), instant revocation, and `X-Robots-Tag: noindex, nofollow, noarchive`.
+- **Time-Limited Revocable Share Links**: Generate cryptographically random 32-byte share URLs (`/s/:token` and `/c/:token`) for healthcare providers with 1–30 day expirations, view counters (1–10 views), instant revocation, and `X-Robots-Tag: noindex, nofollow, noarchive`.
+- **4-Quadrant Clinician Scan**: Rapid 30-second GP scan highlighting Primary Concerns, Daily Functional Impact, Recorded Health Background, and Priority Questions.
 
 ---
 
@@ -103,8 +130,8 @@ recHERsion_2026/
 
 - **Strict User Consent**: AI features are disabled by default and require explicit consent (`ai_summary` consent record).
 - **Zero Raw Data Leaks**: Only user-selected check-in records are decrypted and formatted.
-- **Non-Diagnostic Guardrails**: Anthropic Messages API (`claude-3-5-sonnet-20241022`) runs under strict system instructions:
-  > *"You are a medical scribe summarizing self-reported patient symptom entries for an Australian GP consultation. Write only factual, descriptive summaries. NEVER diagnose, NEVER predict, NEVER prescribe."*
+- **Non-Diagnostic Guardrails**: Anthropic Messages API runs under strict system instructions:
+  > *"You are a medical scribe summarizing self-reported symptom entries for an Australian GP consultation. Write only factual, descriptive summaries. NEVER diagnose, NEVER predict, NEVER prescribe."*
 - **Automatic Fallback**: If the external model returns any banned diagnostic terms (flagged by `lintWording()`) or if the network/API key is unavailable, the system automatically falls back to the deterministic summary engine.
 
 ---
@@ -116,21 +143,20 @@ Use this script to demonstrate all capabilities during hackathon evaluations:
 1. **Load Persona & Onboarding (0:00 - 1:00)**:
    - Navigate to **Settings** $\rightarrow$ **Load Demo Data (Maya, age 47)**.
    - Observe Maya's self-reported profile: 31 entries over 8 weeks reflecting menstrual cycle irregularities, hot flashes, night sweats, and sleep disturbances.
-2. **Review Journal & Safety Triggers (1:00 - 2:00)**:
-   - Open **Journal** $\rightarrow$ Click **New Check-in**.
+2. **Review Journal & Voice Diary (1:00 - 2:00)**:
+   - Open **Journal** $\rightarrow$ Click **New Check-in** $\rightarrow$ Try the **Voice Diary** in English, Hindi, or Marathi with human confirmation.
    - Type *"overwhelmed and hopeless"* into notes $\rightarrow$ Notice the gentle, non-blocking Australian crisis support card (Lifeline 13 11 14).
    - Click the red **Urgent Care** button in the header $\rightarrow$ Inspect the red-flag symptom guide and emergency hotlines.
-3. **Explore Timeline & Deterministic Insights (2:00 - 3:00)**:
-   - Open **Timeline** $\rightarrow$ Notice the visual gap markers for dates with $>14$ days between entries.
-   - Switch to the **Insights** tab $\rightarrow$ Review the generated observations. Click **Evidence** to verify rule ID (`RULE-MENST-001`), version, supporting check-in IDs, and explicit limitations.
-4. **Life-Stage Transition & GP Consultation Prep (3:00 - 4:00)**:
-   - Open **Consultation** $\rightarrow$ Answer the 6-question prep interview.
-   - Notice the suggested transition prompt towards perimenopause support.
-   - Click **Export PDF** $\rightarrow$ A clean, medical-grade PDF is generated with the mandatory non-diagnostic clinical disclaimer and page footers.
-5. **Security, Sync & Quick Escape (4:00 - 5:00)**:
-   - Click **Share Summary** $\rightarrow$ Generate a 7-day secure link with max 5 views.
-   - Open **Settings** $\rightarrow$ Enable **PIN Lock** (e.g. `1234`). Click **Lock Now** to demonstrate the numeric keypad lock screen.
-   - Unlock with `1234`, then press the keyboard `Esc` key or click **Quick Escape** $\rightarrow$ Instant redirect to `bom.gov.au`.
+3. **Explore Timeline & Cycle-to-Cycle Comparison (2:00 - 3:00)**:
+   - Open **Timeline** $\rightarrow$ Review the deterministic Cycle-to-Cycle comparison cards showing cycle length and cramp changes.
+   - Copy a pre-formulated **Self-Advocacy Phrase** for your upcoming appointment.
+4. **Care Navigator & 3-Stage Appointment Prep (3:00 - 4:00)**:
+   - Open **Care Navigator** $\rightarrow$ Run a symptom assessment to receive deterministic urgency guidance and doctor question checklist.
+   - Open **Appointment Prep** $\rightarrow$ Prepare visit questions, use the In-Consultation live checklist, and record post-visit debrief with refill alerts.
+5. **Clinician View, Security & Quick Escape (4:00 - 5:00)**:
+   - Click **Clinician View** or generate a secure share link $\rightarrow$ Review the 4-Quadrant Rapid Scan layout.
+   - Switch language via the **Language Selector** (English / हिन्दी / मराठी).
+   - Test **PIN Lock** or press `Esc` / click **Quick Escape** $\rightarrow$ Instant redirect to `bom.gov.au`.
 
 ---
 
@@ -150,7 +176,7 @@ cd recHERsion_2026
 # 2. Install dependencies across all workspaces
 npm install
 
-# 3. Run all unit and integration test suites
+# 3. Run all unit and integration test suites (78 tests)
 npm test
 
 # 4. Start backend server (Port 3000)
@@ -179,24 +205,26 @@ docker-compose up --build
 Run the full monorepo test suite:
 
 ```bash
-# Run shared and server test suites
+# Run shared and server test suites (78 tests)
 npm test
 
 # Run frontend typecheck and linting
 npm run typecheck
 npm run lint
-npm run build
+
+# Build client and server bundles
+npm run build:all
 ```
 
-**Test Coverage Summary:**
-- `shared`: 15 tests (preventive state machines, deterministic rules, wording linter).
-- `server`: 35 tests (multi-tenant isolation, Argon2id auth, AES-256-GCM crypto, screening timelines, PDF generation, sync outbox, share tokens, AI guardrails).
+**Test Coverage Summary (78 Tests Passing):**
+- `@rechersion/shared` (28 tests): Deterministic observation rules, cycle-to-cycle comparison engine, care navigator triage engine, Australian preventive screening state machines, and i18n wording compliance.
+- `@rechersion/server` (50 tests): Multi-tenant isolation, Argon2id auth, AES-256-GCM crypto, screening timelines, PDF generation, sync outbox, share tokens, AI guardrails, About Me profile endpoints, Care Navigator endpoints, Care Finder directory routes, and 3-stage debrief/follow-up routes.
 
 ---
 
 ## 📋 Clinical Review & Production Readiness Roadmap
 
-Before deploying this software for real clinical or patient use, the following steps are required:
+All clinical decisions, triage rules, screening thresholds, and translated safety disclaimers are documented in `CLINICAL_REVIEW_TODO.md` for independent human clinical sign-off:
 
 - [ ] **RACGP Clinical Protocol Review**: Formal evaluation of the rule criteria in `au.json` with an Australian General Practitioner or RACGP representative.
 - [ ] **Therapeutic Goods Administration (TGA) Review**: Submit documentation to verify classification boundaries under the Australian SaMD (Software as a Medical Device) regulatory framework.
