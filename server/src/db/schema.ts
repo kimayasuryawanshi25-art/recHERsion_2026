@@ -134,6 +134,7 @@ export const consultationSummaries = sqliteTable('consultation_summaries', {
   relevantRecords: text('relevant_records').notNull().default(''),
   questionsForDoctor: text('questions_for_doctor').notNull().default(''),
   selectedEntryIds: text('selected_entry_ids').notNull().default('[]'),
+  sections: text('sections').notNull().default('[]'),
   generatedText: text('generated_text').notNull().default(''),
   editedText: text('edited_text').notNull().default(''),
   createdAt: text('created_at').notNull(),

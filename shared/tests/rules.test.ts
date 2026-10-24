@@ -4,6 +4,7 @@ import {
   severitySummaryRule,
   missingInfoRule,
   lintWording,
+  type ObservationOutput,
 } from '../src/index.js';
 import type { SymptomEntry } from '../src/index.js';
 
@@ -58,7 +59,7 @@ describe('Rules Engine — Edge Cases & Guards', () => {
     expect(sevObs).toBeNull();
 
     // Missing info rule should identify severity, mood, and sleep as unrecorded
-    const missingObs = missingInfoRule.evaluate(entries);
+    const missingObs = missingInfoRule.evaluate(entries) as ObservationOutput | null;
     expect(missingObs).not.toBeNull();
     expect(missingObs?.description).toContain('severity (2/3)');
     expect(missingObs?.description).toContain('mood (3/3)');

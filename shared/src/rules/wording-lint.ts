@@ -40,6 +40,11 @@ export const FORBIDDEN_PATTERNS: { regex: RegExp; phrase: string; description: s
     phrase: 'you should take',
     description: 'Avoid prescribing or medical directives. Use prompts like "Discuss with your doctor".',
   },
+  {
+    regex: /\b(diagnosis|diagnostic|disorder|disease|pathology|patient)\b/i,
+    phrase: 'diagnostic terms (diagnosis, disorder, disease, pathology, patient)',
+    description: 'Banned diagnostic terms. Replace with descriptive terms like "pattern", "check-in", "self-reported", or "observation".',
+  },
 ];
 
 export interface WordingViolation {
@@ -52,8 +57,14 @@ export interface WordingViolation {
 export function lintWording(text: string): { valid: boolean; violations: WordingViolation[] } {
   const violations: WordingViolation[] = [];
 
+  // Safely exempt mandatory non-diagnostic disclaimers
+  const textToScan = text
+    .replace(/not\s+(?:a\s+)?(?:clinical\s+assessment,\s+)?(?:medical\s+)?diagnosis/gi, '')
+    .replace(/not\s+(?:a\s+)?diagnosis/gi, '')
+    .replace(/not\s+(?:a\s+)?medical\s+diagnosis/gi, '');
+
   for (const { regex, phrase, description } of FORBIDDEN_PATTERNS) {
-    const match = regex.exec(text);
+    const match = regex.exec(textToScan);
     if (match) {
       violations.push({
         phrase,
@@ -68,4 +79,12 @@ export function lintWording(text: string): { valid: boolean; violations: Wording
     valid: violations.length === 0,
     violations,
   };
+}
+
+export function assertDescriptiveWording(text: string): void {
+  const result = lintWording(text);
+  if (!result.valid) {
+    const list = result.violations.map(v => `"${v.matchedText}" (${v.phrase})`).join(', ');
+    throw new Error(`Diagnostic wording detected: ${list}`);
+  }
 }

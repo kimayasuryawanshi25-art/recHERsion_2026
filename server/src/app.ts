@@ -11,6 +11,8 @@ import { clinicalRoutes } from './routes/clinical.routes.js';
 import { observationsRoutes } from './routes/observations.routes.js';
 
 import { screeningTimelineRoutes } from './routes/screening-timeline.routes.js';
+import { summariesRoutes } from './routes/summaries.routes.js';
+import { transitionsRoutes } from './routes/transitions.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -33,6 +35,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(clinicalRoutes, { prefix: '/api/v1' });
   await app.register(observationsRoutes, { prefix: '/api/v1' });
   await app.register(screeningTimelineRoutes, { prefix: '/api/v1' });
+  await app.register(summariesRoutes, { prefix: '/api/v1/summaries' });
+  await app.register(transitionsRoutes, { prefix: '/api/v1/transitions' });
 
   return app;
 }

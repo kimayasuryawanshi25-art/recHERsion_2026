@@ -144,6 +144,7 @@ export async function initDatabase(): Promise<void> {
       relevant_records TEXT NOT NULL DEFAULT '',
       questions_for_doctor TEXT NOT NULL DEFAULT '',
       selected_entry_ids TEXT NOT NULL DEFAULT '[]',
+      sections TEXT NOT NULL DEFAULT '[]',
       generated_text TEXT NOT NULL DEFAULT '',
       edited_text TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
@@ -174,6 +175,13 @@ export async function initDatabase(): Promise<void> {
       updated_at TEXT NOT NULL
     );
   `);
+
+  // Migrate existing tables if needed
+  try {
+    await client.execute(`ALTER TABLE consultation_summaries ADD COLUMN sections TEXT NOT NULL DEFAULT '[]';`);
+  } catch {
+    // Column already exists
+  }
 
   // Seed rules registry from shared registry if not present
   const { RULE_REGISTRY } = await import('@rechersion/shared');
