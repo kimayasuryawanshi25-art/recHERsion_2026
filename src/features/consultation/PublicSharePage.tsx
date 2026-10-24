@@ -10,23 +10,33 @@ export function PublicSharePage() {
   const [data, setData] = useState<any | null>(null);
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid link');
-      setLoading(false);
-      return;
-    }
-
-    (async () => {
-      try {
-        const res = await api.share.getPublic(token);
-        setData(res);
-      } catch (err: any) {
-        setError(err.message || 'This link has expired, reached its maximum view limit, or has been revoked.');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    if (!token) return;
+    let active = true;
+    api.share.getPublic(token)
+      .then(res => {
+        if (active) {
+          setData(res);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        if (active) {
+          setError(err.message || 'This link has expired, reached its maximum view limit, or has been revoked.');
+          setLoading(false);
+        }
+      });
+    return () => { active = false; };
   }, [token]);
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-sand-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-2xl bg-white p-8 text-center shadow-lg border border-sand-200">
+          <p className="text-sm text-stone-700">Invalid share link.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

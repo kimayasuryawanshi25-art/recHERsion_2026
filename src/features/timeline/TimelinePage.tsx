@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line,
   CartesianGrid, Legend, Cell,
 } from 'recharts';
-import { Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2 } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries } from '../../lib/db';
 import { generateObservations } from '../../lib/observations';
@@ -161,47 +161,75 @@ export function TimelinePage() {
       {/* Timeline */}
       {activeTab === 'timeline' && (
         <div className="space-y-3">
-          {filtered.sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a))).map(entry => {
-            const d = getEntryDate(entry);
-            const dateObj = d ? new Date(d + 'T00:00:00') : new Date();
-            return (
-              <div key={entry.id} className="bg-white border border-sand-200 rounded-xl p-4 flex items-start gap-3">
-                <div className="text-center shrink-0 w-14">
-                  <div className="text-xs text-gray-400">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
-                  <div className="text-xl font-bold text-gray-700">{dateObj.getDate()}</div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-800 text-sm">{entry.symptom}</span>
-                    {entry.severity ? (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
-                        style={{ backgroundColor: SEVERITY_COLORS[entry.severity as Severity] }}>
-                        {SEVERITY_LABELS[entry.severity as Severity]}
-                      </span>
-                    ) : (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-sand-200 text-stone-500">
-                        Severity: not recorded
-                      </span>
-                    )}
+          {(() => {
+            const sorted = [...filtered].sort((a, b) => getEntryDate(b).localeCompare(getEntryDate(a)));
+            return sorted.map((entry, index) => {
+              const d = getEntryDate(entry);
+              const dateObj = new Date((d || '1970-01-01') + 'T00:00:00');
+
+              // Calculate gap to next (earlier) entry
+              let gapDays = 0;
+              let nextDateStr = '';
+              if (index < sorted.length - 1) {
+                const nextD = getEntryDate(sorted[index + 1]);
+                if (d && nextD) {
+                  const tCurrent = new Date(d + 'T00:00:00').getTime();
+                  const tNext = new Date(nextD + 'T00:00:00').getTime();
+                  gapDays = Math.round((tCurrent - tNext) / (1000 * 60 * 60 * 24));
+                  nextDateStr = nextD;
+                }
+              }
+
+              return (
+                <div key={entry.id}>
+                  <div className="bg-white border border-sand-200 rounded-xl p-4 flex items-start gap-3">
+                    <div className="text-center shrink-0 w-14">
+                      <div className="text-xs text-gray-400">{dateObj.toLocaleDateString('en-US', { month: 'short' })}</div>
+                      <div className="text-xl font-bold text-gray-700">{dateObj.getDate()}</div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-800 text-sm">{entry.symptom}</span>
+                        {entry.severity ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
+                            style={{ backgroundColor: SEVERITY_COLORS[entry.severity as Severity] }}>
+                            {SEVERITY_LABELS[entry.severity as Severity]}
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-sand-200 text-stone-500">
+                            Severity: not recorded
+                          </span>
+                        )}
+                      </div>
+                      {entry.dailyImpact ? (
+                        <p className="text-xs text-gray-500 mt-1">{entry.dailyImpact}</p>
+                      ) : null}
+                      <div className="flex gap-3 mt-1 text-xs text-gray-400">
+                        {entry.mood !== null && entry.mood !== undefined ? <span>Mood {entry.mood}/5</span> : null}
+                        {entry.sleepQuality !== null && entry.sleepQuality !== undefined ? <span>Sleep {entry.sleepQuality}/5</span> : null}
+                        {entry.energy !== null && entry.energy !== undefined ? <span>Energy {entry.energy}/5</span> : null}
+                        {entry.mood === null && entry.sleepQuality === null && entry.energy === null && (
+                          <span className="italic text-stone-400">Wellbeing metrics: not recorded</span>
+                        )}
+                      </div>
+                    </div>
+                    <Link to={`/journal/edit/${entry.id}`} className="p-1.5 text-gray-400 hover:text-plum-600 rounded-lg hover:bg-sand-100 shrink-0" aria-label="View entry">
+                      <Eye className="w-4 h-4" />
+                    </Link>
                   </div>
-                  {entry.dailyImpact ? (
-                    <p className="text-xs text-gray-500 mt-1">{entry.dailyImpact}</p>
-                  ) : null}
-                  <div className="flex gap-3 mt-1 text-xs text-gray-400">
-                    {entry.mood !== null && entry.mood !== undefined ? <span>Mood {entry.mood}/5</span> : null}
-                    {entry.sleepQuality !== null && entry.sleepQuality !== undefined ? <span>Sleep {entry.sleepQuality}/5</span> : null}
-                    {entry.energy !== null && entry.energy !== undefined ? <span>Energy {entry.energy}/5</span> : null}
-                    {entry.mood === null && entry.sleepQuality === null && entry.energy === null && (
-                      <span className="italic text-stone-400">Wellbeing metrics: not recorded</span>
-                    )}
-                  </div>
+
+                  {gapDays > 14 && (
+                    <div className="my-3 flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-dashed border-sand-300 bg-sand-100/50 text-xs text-stone-500">
+                      <CalendarX2 className="h-4 w-4 text-stone-400 shrink-0" />
+                      <span>
+                        <strong>{gapDays} days without recorded check-ins</strong> (between {nextDateStr} and {d})
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <Link to={`/journal/edit/${entry.id}`} className="p-1.5 text-gray-400 hover:text-plum-600 rounded-lg hover:bg-sand-100 shrink-0" aria-label="View entry">
-                  <Eye className="w-4 h-4" />
-                </Link>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       )}
 

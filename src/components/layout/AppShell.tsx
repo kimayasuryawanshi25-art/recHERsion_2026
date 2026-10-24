@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -18,9 +18,14 @@ import {
   Settings,
   ChevronRight,
   Leaf,
+  AlertOctagon,
 } from 'lucide-react';
 import { SyncStatusBadge } from '../ui/SyncStatusBadge';
 import { AuthModal } from '../../features/auth/AuthModal';
+import { UrgentCarePanel } from '../ui/UrgentCarePanel';
+import { PinLockModal } from '../ui/PinLockModal';
+import { QuickEscapeButton } from '../ui/QuickEscapeButton';
+import { pinLockService } from '../../lib/safety/pinLock';
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Overview' },
@@ -46,8 +51,31 @@ export function AppShell({
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [urgentCareOpen, setUrgentCareOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const recordActivity = () => pinLockService.recordUserActivity();
+    window.addEventListener('mousemove', recordActivity);
+    window.addEventListener('keydown', recordActivity);
+    window.addEventListener('touchstart', recordActivity);
+    window.addEventListener('scroll', recordActivity);
+
+    const timer = setInterval(async () => {
+      const shouldLock = await pinLockService.checkInactivityTimeout();
+      if (shouldLock) setIsLocked(true);
+    }, 15000);
+
+    return () => {
+      window.removeEventListener('mousemove', recordActivity);
+      window.removeEventListener('keydown', recordActivity);
+      window.removeEventListener('touchstart', recordActivity);
+      window.removeEventListener('scroll', recordActivity);
+      clearInterval(timer);
+    };
+  }, []);
 
   const appName = discreetMode ? 'Health Notes' : 'HerHealth Companion';
 
@@ -234,7 +262,16 @@ export function AppShell({
               )?.label ?? 'Health space'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <QuickEscapeButton />
+            <button
+              type="button"
+              onClick={() => setUrgentCareOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50"
+            >
+              <AlertOctagon className="h-3.5 w-3.5 text-rose-600" />
+              <span>Urgent Care</span>
+            </button>
             <SyncStatusBadge onClick={() => setAuthModalOpen(true)} />
             <button
               type="button"
@@ -267,6 +304,14 @@ export function AppShell({
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
+      />
+      <UrgentCarePanel
+        isOpen={urgentCareOpen}
+        onClose={() => setUrgentCareOpen(false)}
+      />
+      <PinLockModal
+        isLocked={isLocked}
+        onUnlocked={() => setIsLocked(false)}
       />
     </div>
   );

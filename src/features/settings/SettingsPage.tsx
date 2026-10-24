@@ -14,7 +14,11 @@ import {
   Cloud,
   LogOut,
   RefreshCw,
+  Lock,
+  Shield,
+  KeyRound,
 } from 'lucide-react';
+import { pinLockService } from '../../lib/safety/pinLock';
 
 import {
   deleteAllData,
@@ -38,6 +42,10 @@ export function SettingsPage() {
   const [userEmail, setUserEmail] = useState<string | null>(syncManager.getUserEmail());
   const fileInput = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [pinEnabled, setPinEnabled] = useState(false);
+  const [isConfiguringPin, setIsConfiguringPin] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [pinError, setPinError] = useState('');
 
   useEffect(() => {
     getSettings().then(saved => {
@@ -47,12 +55,40 @@ export function SettingsPage() {
       }
     });
 
+    pinLockService.isPinEnabled().then(setPinEnabled);
+
     const unsub = syncManager.subscribe((st, em) => {
       setSyncStatus(st);
       setUserEmail(em ?? null);
     });
     return unsub;
   }, []);
+
+  const handleSavePin = async () => {
+    if (!/^\d{4,6}$/.test(newPin)) {
+      setPinError('PIN must be 4 to 6 numeric digits');
+      return;
+    }
+    await pinLockService.setPin(newPin);
+    setPinEnabled(true);
+    setIsConfiguringPin(false);
+    setNewPin('');
+    setPinError('');
+    setMessage('Security PIN set successfully. The app will auto-lock after 5 minutes of inactivity.');
+  };
+
+  const handleDisablePin = async () => {
+    if (window.confirm('Are you sure you want to disable PIN lock protection?')) {
+      await pinLockService.disablePin();
+      setPinEnabled(false);
+      setIsConfiguringPin(false);
+      setMessage('Security PIN protection disabled.');
+    }
+  };
+
+  const handleLockNow = () => {
+    pinLockService.lock();
+  };
 
   const handleLogout = async () => {
     try {
@@ -315,6 +351,113 @@ export function SettingsPage() {
           app, encrypt data, or prevent someone with browser access from
           opening your records.
         </p>
+      </section>
+
+      <section className="app-card p-5 sm:p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+              <Shield className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="font-semibold text-stone-800">App Lock (Security PIN)</h2>
+              <p className="mt-1 text-sm text-stone-500">
+                Protect your journal with a local WebCrypto PBKDF2/SHA-256 PIN. Auto-locks after 5 minutes of inactivity.
+              </p>
+            </div>
+          </div>
+          {pinEnabled && (
+            <button
+              type="button"
+              onClick={handleLockNow}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Lock Now
+            </button>
+          )}
+        </div>
+
+        {pinEnabled ? (
+          <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-teal-900 font-medium">
+              <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0" />
+              <span>PIN lock protection is active on this device.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsConfiguringPin(true)}
+                className="rounded-lg border border-sand-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-sand-50"
+              >
+                Change PIN
+              </button>
+              <button
+                type="button"
+                onClick={handleDisablePin}
+                className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+              >
+                Disable PIN
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {!isConfiguringPin ? (
+              <button
+                type="button"
+                onClick={() => setIsConfiguringPin(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-plum-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-plum-700"
+              >
+                <KeyRound className="h-4 w-4" />
+                Enable PIN Lock
+              </button>
+            ) : (
+              <div className="space-y-3 rounded-xl border border-sand-200 bg-sand-50 p-4 max-w-md">
+                <label htmlFor="newPinInput" className="block text-xs font-semibold uppercase tracking-wider text-stone-600">
+                  Enter 4-6 Digit Numeric PIN
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="newPinInput"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={newPin}
+                    onChange={e => {
+                      setNewPin(e.target.value.replace(/\D/g, ''));
+                      setPinError('');
+                    }}
+                    placeholder="••••"
+                    className="w-32 rounded-xl border border-sand-300 bg-white px-3 py-2 text-center text-lg tracking-widest outline-none focus:border-plum-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSavePin}
+                    className="rounded-xl bg-plum-600 px-4 py-2 text-xs font-semibold text-white hover:bg-plum-700"
+                  >
+                    Save & Activate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsConfiguringPin(false);
+                      setNewPin('');
+                      setPinError('');
+                    }}
+                    className="rounded-xl border border-sand-300 bg-white px-3 py-2 text-xs font-medium text-stone-600 hover:bg-sand-100"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {pinError && <p className="text-xs text-rose-600">{pinError}</p>}
+                <p className="text-xs text-stone-500">
+                  Your PIN is cryptographically hashed with a random salt in IndexedDB. It is never sent to any server.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="app-card p-5 sm:p-6">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, HeartHandshake } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -9,6 +9,7 @@ import {
   type SymptomEntry, type Severity, type HealthContextId
 } from '../../types/health';
 import { saveEntry, getEntry, deleteEntry, getSettings } from '../../lib/db';
+import { detectCrisisLanguage } from '../../lib/safety/crisisKeywords';
 
 interface Props { editMode?: boolean; }
 
@@ -23,7 +24,7 @@ export function EntryForm({ editMode = false }: Props) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [contexts, setContexts] = useState<HealthContextId[]>([]);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     date: new Date().toISOString().slice(0, 10),
     time: '',
     symptom: '',
@@ -34,7 +35,7 @@ export function EntryForm({ editMode = false }: Props) {
     dailyImpact: '',
     notes: '',
     medications: '',
-  });
+  }));
 
 
   const update = (field: string, value: string) => {
@@ -241,6 +242,24 @@ export function EntryForm({ editMode = false }: Props) {
                 className="w-full px-3 py-2 border border-sand-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-plum-300 resize-none"
               />
             </div>
+
+            {(detectCrisisLanguage(form.notes) || detectCrisisLanguage(form.dailyImpact)) && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-900 flex items-start gap-3">
+                <HeartHandshake className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-rose-950 mb-0.5">Compassionate support is available</p>
+                  <p className="text-rose-800 leading-relaxed">
+                    If you are feeling overwhelmed, distressed, or unsafe, free confidential Australian support is available right now:
+                    <br />
+                    • <strong>Lifeline:</strong> <a href="tel:131114" className="underline font-bold">13 11 14</a> (24/7 crisis support)
+                    <br />
+                    • <strong>1800RESPECT:</strong> <a href="tel:1800737732" className="underline font-bold">1800 737 732</a> (24/7 domestic & sexual violence)
+                    <br />
+                    • <strong>Emergency Services:</strong> <a href="tel:000" className="underline font-bold">000</a>
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Medications <span className="text-gray-400 text-xs">(optional)</span></label>
