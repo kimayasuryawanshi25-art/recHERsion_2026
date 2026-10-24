@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecdd3;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  --color-rose-900: #881337;
+  --color-plum-50: #faf5ff;
+  --color-plum-100: #f3e8ff;
+  --color-plum-200: #e9d5ff;
+  --color-plum-300: #d8b4fe;
+  --color-plum-400: #c084fc;
+  --color-plum-500: #a855f7;
+  --color-plum-600: #9333ea;
+  --color-plum-700: #7e22ce;
+  --color-plum-800: #6b21a8;
+  --color-plum-900: #581c87;
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-sand-50: #fdfcfa;
+  --color-sand-100: #f7f5f0;
+  --color-sand-200: #efe9df;
+  --color-sand-300: #e2d8c8;
+  --color-sand-400: #c9b99a;
+  --color-sand-500: #a89771;
+  --color-sand-600: #8b7a59;
+  --color-sand-700: #6e5f43;
+  --color-sand-800: #544832;
+  --color-sand-900: #3a3122;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  @apply bg-sand-50 text-gray-800 antialiased;
+  font-family: var(--font-sans);
+}
+
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-plum-500 rounded-sm;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
