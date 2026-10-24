@@ -10,6 +10,8 @@ import { entriesRoutes } from './routes/entries.routes.js';
 import { clinicalRoutes } from './routes/clinical.routes.js';
 import { observationsRoutes } from './routes/observations.routes.js';
 
+import { screeningTimelineRoutes } from './routes/screening-timeline.routes.js';
+
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
     logger: false,
@@ -30,6 +32,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(entriesRoutes, { prefix: '/api/v1' });
   await app.register(clinicalRoutes, { prefix: '/api/v1' });
   await app.register(observationsRoutes, { prefix: '/api/v1' });
+  await app.register(screeningTimelineRoutes, { prefix: '/api/v1' });
 
   return app;
 }
