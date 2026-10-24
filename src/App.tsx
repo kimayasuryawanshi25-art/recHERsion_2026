@@ -13,6 +13,7 @@ import { PrivacyPage } from './features/privacy/PrivacyPage';
 import { getSettings, saveSettings } from './lib/db';
 import type { UserSettings } from './types/health';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { PublicSharePage } from './features/consultation/PublicSharePage';
 
 export default function App() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -65,6 +66,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/s/:token" element={<PublicSharePage />} />
         <Route
           path="/*"
           element={

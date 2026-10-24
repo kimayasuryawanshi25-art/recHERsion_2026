@@ -177,6 +177,21 @@ class ApiClient {
     },
     evidence: async (ruleId: string) => this.request(`/observations/${encodeURIComponent(ruleId)}/evidence`),
   };
+
+  // --- Share Links ---
+  share = {
+    create: async (summaryId: string, expiryDays = 7, maxViews = 5) =>
+      this.request('/share', {
+        method: 'POST',
+        body: JSON.stringify({ summaryId, expiryDays, maxViews }),
+      }),
+    list: async () => this.request('/share'),
+    revoke: async (id: string) =>
+      this.request(`/share/${id}`, {
+        method: 'DELETE',
+      }),
+    getPublic: async (token: string) => this.request(`/share/public/${token}`),
+  };
 }
 
 export const api = new ApiClient();

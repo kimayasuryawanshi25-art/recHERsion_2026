@@ -14,6 +14,7 @@ import { screeningTimelineRoutes } from './routes/screening-timeline.routes.js';
 import { summariesRoutes } from './routes/summaries.routes.js';
 import { transitionsRoutes } from './routes/transitions.routes.js';
 import { syncRoutes } from './routes/sync.routes.js';
+import { shareRoutes } from './routes/share.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -39,6 +40,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(summariesRoutes, { prefix: '/api/v1/summaries' });
   await app.register(transitionsRoutes, { prefix: '/api/v1/transitions' });
   await app.register(syncRoutes, { prefix: '/api/v1/sync' });
+  await app.register(shareRoutes, { prefix: '/api/v1/share' });
 
   return app;
 }

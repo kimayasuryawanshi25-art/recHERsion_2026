@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { FileText, ChevronRight, ChevronLeft, Printer, Copy, Check } from 'lucide-react';
+import { FileText, ChevronRight, ChevronLeft, Printer, Copy, Check, Share2 } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { getAllEntries, saveConsultation } from '../../lib/db';
 import { type SymptomEntry, type ConsultationSummary, getEntryDate } from '../../types/health';
 import { v4 as uuidv4 } from 'uuid';
+import { ShareDialog } from './ShareDialog';
+import { api } from '../../lib/api';
 
 const QUESTIONS = [
   { key: 'whatChanged', label: 'What has changed recently?', placeholder: 'Describe any recent changes in your health or symptoms...' },
@@ -20,6 +22,8 @@ export function ConsultationPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [summaryText, setSummaryText] = useState('');
   const [copied, setCopied] = useState(false);
+  const [currentSummaryId, setCurrentSummaryId] = useState('');
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -114,17 +118,34 @@ export function ConsultationPage() {
   };
 
   const goToSummary = () => {
-    setSummaryText(generateSummary());
+    const text = generateSummary();
+    setSummaryText(text);
     setStep(8);
     // Save
     const now = new Date().toISOString();
+    const sumId = uuidv4();
+    setCurrentSummaryId(sumId);
+
     const c: ConsultationSummary = {
-      id: uuidv4(), ...answers as any,
+      id: sumId, ...answers as any,
       selectedEntryIds: entries.slice(0, 20).map(e => e.id),
-      generatedText: generateSummary(), editedText: generateSummary(),
+      generatedText: text, editedText: text,
       createdAt: now, updatedAt: now,
     };
     saveConsultation(c);
+
+    // If online & logged in, also sync summary to backend
+    api.summaries.interview({
+      whatChanged: answers.whatChanged || '',
+      mainConcerns: answers.mainConcerns || '',
+      firstNoticed: answers.firstNoticed || '',
+      dailyImpact: answers.dailyImpact || '',
+      relevantRecords: answers.relevantRecords || '',
+      questionsForDoctor: answers.questionsForDoctor || '',
+      selectedEntryIds: entries.slice(0, 20).map(e => e.id),
+    }).then(res => {
+      if (res && res.id) setCurrentSummaryId(res.id);
+    }).catch(() => {});
   };
 
   const handlePrint = () => window.print();
@@ -227,10 +248,13 @@ export function ConsultationPage() {
     <div>
       <PageHeader title="Your Appointment Summary" description="Review, edit, then print or copy" />
 
-      <div className="flex gap-3 mb-4 no-print">
+      <div className="flex flex-wrap gap-3 mb-4 no-print">
         <button onClick={handleCopy} className="inline-flex items-center gap-2 bg-white border border-sand-200 rounded-xl px-4 py-2 text-sm text-gray-600 hover:bg-sand-50 transition-colors">
           {copied ? <Check className="w-4 h-4 text-teal-500" /> : <Copy className="w-4 h-4" />}
           {copied ? 'Copied!' : 'Copy'}
+        </button>
+        <button onClick={() => setShareDialogOpen(true)} className="inline-flex items-center gap-2 bg-white border border-sand-200 rounded-xl px-4 py-2 text-sm text-plum-700 hover:bg-plum-50 transition-colors font-medium">
+          <Share2 className="w-4 h-4 text-plum-600" /> Share Link
         </button>
         <button onClick={handlePrint} className="inline-flex items-center gap-2 bg-plum-600 text-white rounded-xl px-5 py-2 text-sm font-medium hover:bg-plum-700 transition-colors">
           <Printer className="w-4 h-4" /> Print / Save PDF
@@ -253,6 +277,12 @@ export function ConsultationPage() {
           <strong>Reminder:</strong> This summary contains your self-reported information. It is not a diagnosis or medical assessment. Your healthcare professional will use their own clinical judgement. You can edit any section before printing.
         </p>
       </div>
+
+      <ShareDialog
+        isOpen={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+        summaryId={currentSummaryId}
+      />
     </div>
   );
 }
