@@ -5,7 +5,7 @@ import {
   CartesianGrid, Legend, Cell,
 } from 'recharts';
 import {
-  Calendar, TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2, Pill, Sparkles,
+  TrendingUp, AlertCircle, ChevronDown, ChevronUp, Eye, CalendarX2, Pill, Sparkles,
   Copy, Check, GitCompare
 } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
@@ -16,6 +16,8 @@ import {
   type SymptomEntry, type Severity,
 } from '../../types/health';
 import { compareCycles, type CycleRecord } from '@rechersion/shared';
+import { ScrollReveal } from '../../components/ui/ScrollReveal';
+import { EmptyRecordsIllustration } from '../../components/ui/Illustrations';
 
 const CHART_COLORS = ['#a855f7', '#f43f5e', '#14b8a6', '#f97316', '#3b82f6', '#84cc16', '#eab308', '#6366f1'];
 
@@ -172,12 +174,20 @@ export function TimelinePage() {
   if (entries.length === 0) return (
     <div>
       <PageHeader title="Timeline & Insights" description="Explore your health records" />
-      <div className="text-center py-16">
-        <Calendar className="w-12 h-12 text-sand-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-600 mb-2">No entries yet</h3>
-        <p className="text-gray-400 text-sm mb-4">Add some check-ins to see your timeline and insights.</p>
-        <Link to="/journal/new" className="inline-flex items-center gap-2 bg-plum-600 text-white rounded-xl px-5 py-2.5 font-medium hover:bg-plum-700 text-sm">Add Check-in</Link>
-      </div>
+      <ScrollReveal>
+        <div className="rounded-3xl border border-sand-200/90 bg-white/80 p-10 text-center shadow-sm backdrop-blur-xl space-y-4">
+          <EmptyRecordsIllustration className="mx-auto" />
+          <h3 className="text-lg font-bold text-stone-800">No entries recorded yet</h3>
+          <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto">
+            Log your symptoms or daily wellbeing in the journal to view your chronological timeline, trends, and patterns.
+          </p>
+          <div className="pt-2">
+            <Link to="/journal/new" className="inline-flex items-center gap-2 bg-plum-600 text-white rounded-xl px-6 py-2.5 font-bold hover:bg-plum-700 text-xs shadow-md shadow-plum-900/15 transition">
+              Add Check-in
+            </Link>
+          </div>
+        </div>
+      </ScrollReveal>
     </div>
   );
 
@@ -190,38 +200,40 @@ export function TimelinePage() {
   ];
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title="Timeline & Insights" description="Explore your health records and patterns" />
 
       {/* Filters */}
-      <div className="bg-white border border-sand-200 rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-            className="px-3 py-1.5 border border-sand-200 rounded-lg text-sm" />
+      <ScrollReveal>
+        <div className="bg-white/80 border border-sand-200/90 rounded-2xl p-4 shadow-xs backdrop-blur-md flex flex-wrap gap-3 items-end">
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 mb-1">From</label>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+              className="px-3 py-1.5 border border-sand-300 rounded-xl text-xs bg-white outline-none focus:ring-1 focus:ring-plum-400" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 mb-1">To</label>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+              className="px-3 py-1.5 border border-sand-300 rounded-xl text-xs bg-white outline-none focus:ring-1 focus:ring-plum-400" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 mb-1">Symptom</label>
+            <select value={symptomFilter} onChange={e => setSymptomFilter(e.target.value)}
+              className="px-3 py-1.5 border border-sand-300 rounded-xl text-xs bg-white outline-none focus:ring-1 focus:ring-plum-400">
+              <option value="">All symptoms</option>
+              {symptoms.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          {(symptomFilter || startDate || endDate) && (
+            <button onClick={() => { setSymptomFilter(''); const dates = entries.map(x => getEntryDate(x)).filter(Boolean).sort(); setStartDate(dates[0] || ''); setEndDate(dates[dates.length - 1] || ''); }}
+              className="text-plum-600 hover:text-plum-700 text-xs font-semibold pb-1">Clear filters</button>
+          )}
+          <div className="text-xs text-stone-400 font-medium ml-auto">{filtered.length} entr{filtered.length === 1 ? 'y' : 'ies'}</div>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-            className="px-3 py-1.5 border border-sand-200 rounded-lg text-sm" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Symptom</label>
-          <select value={symptomFilter} onChange={e => setSymptomFilter(e.target.value)}
-            className="px-3 py-1.5 border border-sand-200 rounded-lg text-sm bg-white">
-            <option value="">All symptoms</option>
-            {symptoms.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        {(symptomFilter || startDate || endDate) && (
-          <button onClick={() => { setSymptomFilter(''); const dates = entries.map(x => getEntryDate(x)).filter(Boolean).sort(); setStartDate(dates[0] || ''); setEndDate(dates[dates.length - 1] || ''); }}
-            className="text-plum-600 hover:text-plum-700 text-sm font-medium pb-0.5">Clear filters</button>
-        )}
-        <div className="text-xs text-gray-400 ml-auto">{filtered.length} entr{filtered.length === 1 ? 'y' : 'ies'}</div>
-      </div>
+      </ScrollReveal>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-sand-100 rounded-xl p-1 mb-6">
+      <div className="flex gap-1.5 bg-sand-100 p-1 rounded-2xl border border-sand-200">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white shadow-sm text-plum-700' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -392,81 +404,89 @@ export function TimelinePage() {
 
       {/* Charts */}
       {activeTab === 'charts' && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Symptom frequency */}
-          <div className="bg-white border border-sand-200 rounded-2xl p-6">
-            <h3 className="font-semibold text-gray-800 mb-1">Symptom Frequency</h3>
-            <p className="text-xs text-gray-400 mb-4">Number of times each symptom was recorded during the selected period. Counts represent recorded mentions.</p>
-            {freqData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={freqData} layout="vertical" margin={{ left: 80 }}>
-                  <XAxis type="number" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value) => [`${value ?? 0} entries`,'Count',]} />
-                  <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                    {freqData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          <ScrollReveal>
+            <div className="bg-white/85 border border-sand-200/90 rounded-3xl p-6 shadow-sm backdrop-blur-md">
+              <h3 className="font-bold text-stone-900 mb-1">Symptom Frequency</h3>
+              <p className="text-xs text-stone-500 mb-4">Number of times each symptom was recorded during the selected period. Counts represent recorded mentions.</p>
+              {freqData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={freqData} layout="vertical" margin={{ left: 80 }}>
+                    <XAxis type="number" allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(value) => [`${value ?? 0} entries`,'Count',]} />
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                      {freqData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <p className="text-sm text-stone-400 text-center py-8">No data for the selected period.</p>}
+            </div>
+          </ScrollReveal>
+
+          {/* Severity trend */}
+          <ScrollReveal delay={100}>
+            <div className="bg-white/85 border border-sand-200/90 rounded-3xl p-6 shadow-sm backdrop-blur-md">
+              <h3 className="font-bold text-stone-900 mb-1">Self-Reported Severity Over Time</h3>
+              <p className="text-xs text-stone-500 mb-4">Your recorded severity values (1–5 scale). Gaps indicate dates without severity data — they are not filled with zero.</p>
+              {sevData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={sevData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="date" tickFormatter={fmt} tick={{ fontSize: 11 }} />
+                    <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} />
+                    <Tooltip labelFormatter={(label) =>label == null ? '' : fmt(String(label))} />
+                    <Legend />
+                    {symptoms.filter(s => !symptomFilter || s === symptomFilter).slice(0, 5).map((s, i) => (
+                      <Line key={s} type="monotone" dataKey={s} stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                        strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : <p className="text-sm text-stone-400 text-center py-8">No severity data for the selected period.</p>}
+            </div>
+          </ScrollReveal>
+
+          {/* Wellbeing trends */}
+          <ScrollReveal delay={150}>
+            <div className="bg-white/85 border border-sand-200/90 rounded-3xl p-6 shadow-sm backdrop-blur-md">
+              <h3 className="font-bold text-stone-900 mb-1">Sleep, Mood & Energy Trends</h3>
+              <p className="text-xs text-stone-500 mb-4">Each measure displayed separately on a 1–5 scale. Not combined into a single score.</p>
+              {wellbeingData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={wellbeingData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="date" tickFormatter={fmt} tick={{ fontSize: 11 }} />
+                    <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} />
+                    <Tooltip labelFormatter={(label) =>label == null ? '' : fmt(String(label))} />
+                    <Legend />
+                    <Line type="monotone" dataKey="sleep" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Sleep" />
+                    <Line type="monotone" dataKey="mood" stroke="#a855f7" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Mood" />
+                    <Line type="monotone" dataKey="energy" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Energy" />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : <p className="text-sm text-stone-400 text-center py-8">No wellbeing data for the selected period.</p>}
+            </div>
+          </ScrollReveal>
+
+          {/* Impact summary */}
+          <ScrollReveal delay={200}>
+            <div className="bg-white/85 border border-sand-200/90 rounded-3xl p-6 shadow-sm backdrop-blur-md">
+              <h3 className="font-bold text-stone-900 mb-1">Daily Life Impact</h3>
+              <p className="text-xs text-stone-500 mb-4">How many entries included information about impact on daily activities.</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={impactData}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {impactData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            ) : <p className="text-sm text-gray-400 text-center py-8">No data for the selected period.</p>}
-          </div>
-
-          {/* Severity trend */}
-          <div className="bg-white border border-sand-200 rounded-2xl p-6">
-            <h3 className="font-semibold text-gray-800 mb-1">Self-Reported Severity Over Time</h3>
-            <p className="text-xs text-gray-400 mb-4">Your recorded severity values (1–5 scale). Gaps indicate dates without severity data — they are not filled with zero.</p>
-            {sevData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={sevData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tickFormatter={fmt} tick={{ fontSize: 11 }} />
-                  <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} />
-                  <Tooltip labelFormatter={(label) =>label == null ? '' : fmt(String(label))} />
-                  <Legend />
-                  {symptoms.filter(s => !symptomFilter || s === symptomFilter).slice(0, 5).map((s, i) => (
-                    <Line key={s} type="monotone" dataKey={s} stroke={CHART_COLORS[i % CHART_COLORS.length]}
-                      strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <p className="text-sm text-gray-400 text-center py-8">No severity data for the selected period.</p>}
-          </div>
-
-          {/* Wellbeing trends */}
-          <div className="bg-white border border-sand-200 rounded-2xl p-6">
-            <h3 className="font-semibold text-gray-800 mb-1">Sleep, Mood & Energy Trends</h3>
-            <p className="text-xs text-gray-400 mb-4">Each measure displayed separately on a 1–5 scale. Not combined into a single score.</p>
-            {wellbeingData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={wellbeingData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tickFormatter={fmt} tick={{ fontSize: 11 }} />
-                  <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} />
-                 <Tooltip labelFormatter={(label) =>label == null ? '' : fmt(String(label))} />
-                  <Legend />
-                  <Line type="monotone" dataKey="sleep" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Sleep" />
-                  <Line type="monotone" dataKey="mood" stroke="#a855f7" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Mood" />
-                  <Line type="monotone" dataKey="energy" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} name="Energy" />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <p className="text-sm text-gray-400 text-center py-8">No wellbeing data for the selected period.</p>}
-          </div>
-
-          {/* Impact summary */}
-          <div className="bg-white border border-sand-200 rounded-2xl p-6">
-            <h3 className="font-semibold text-gray-800 mb-1">Daily Life Impact</h3>
-            <p className="text-xs text-gray-400 mb-4">How many entries included information about impact on daily activities.</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={impactData}>
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {impactData.map((d, i) => <Cell key={i} fill={d.fill} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+            </div>
+          </ScrollReveal>
         </div>
       )}
 

@@ -6,13 +6,14 @@ interface UrgentCarePanelProps {
 }
 
 const RED_FLAG_SYMPTOMS = [
-  'Sudden, severe, or sharply worsening lower abdominal or pelvic pain',
-  'Very heavy bleeding (soaking through two or more pads or tampons per hour for two consecutive hours)',
-  'Fever (>38.5°C) accompanied by pelvic tenderness, chills, or unusual discharge',
+  'Sudden, severe, or rapidly worsening lower abdominal or pelvic pain',
+  'Very heavy vaginal bleeding (soaking through two or more pads per hour for two consecutive hours), or bleeding with faintness or severe weakness',
+  'Fever above 38.5°C accompanied by pelvic pain, chills, or unusual vaginal discharge',
   'Severe shortness of breath, sudden chest pain, or coughing up blood',
-  'Sudden painful swelling or redness in one calf or leg',
-  'Sudden severe headache, visual changes (flashes/blind spots), or sudden confusion',
-  'Feeling faint, dizziness upon standing, or loss of consciousness',
+  'Sudden painful swelling, redness, or warmth in one calf or leg',
+  'Sudden severe headache, new visual disturbances, or sudden confusion',
+  'Feeling faint, severe dizziness, or loss of consciousness',
+  'Severe abdominal pain or vaginal bleeding during pregnancy, or possible pregnancy with pain and dizziness',
 ];
 
 export function UrgentCarePanel({ isOpen, onClose }: UrgentCarePanelProps) {
@@ -29,13 +30,17 @@ export function UrgentCarePanel({ isOpen, onClose }: UrgentCarePanelProps) {
           <X className="h-5 w-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4 pr-8">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
             <AlertOctagon className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="text-xl font-bold text-stone-900">Urgent Care Warning Signs</h2>
-            <p className="text-xs text-stone-500">When to seek immediate clinical or emergency assistance</p>
+            <h2 className="text-xl font-bold text-stone-900">
+              Urgent Care Warning Signs
+            </h2>
+            <p className="text-xs text-stone-500">
+              When to seek immediate medical or emergency assistance
+            </p>
           </div>
         </div>
 
@@ -45,8 +50,12 @@ export function UrgentCarePanel({ isOpen, onClose }: UrgentCarePanelProps) {
             Immediate Action Red Flags
           </p>
           <p className="text-xs text-rose-800 leading-relaxed mb-3">
-            If you or someone you are supporting experiences any of the following symptoms, please contact emergency services (<strong>000</strong>) or present to the nearest hospital emergency department:
+            If you experience any of the following symptoms, seek immediate
+            medical attention. Call <strong>112</strong> for emergency assistance
+            in India or go to the nearest hospital emergency department. Do not
+            wait for an app response.
           </p>
+
           <ul className="space-y-2 text-xs text-stone-800">
             {RED_FLAG_SYMPTOMS.map((symptom, idx) => (
               <li key={idx} className="flex items-start gap-2">
@@ -57,49 +66,68 @@ export function UrgentCarePanel({ isOpen, onClose }: UrgentCarePanelProps) {
           </ul>
         </div>
 
-        <h3 className="text-sm font-bold text-stone-900 mb-3">Australian Support & Emergency Contacts</h3>
+        <h3 className="text-sm font-bold text-stone-900 mb-3">
+          Indian Emergency & Support Contacts
+        </h3>
+
         <div className="grid sm:grid-cols-2 gap-3 mb-5">
           <a
-            href="tel:000"
+            href="tel:112"
             className="flex items-center gap-3 rounded-xl border border-rose-300 bg-rose-50 p-3.5 transition hover:bg-rose-100"
           >
             <Phone className="h-5 w-5 text-rose-600 shrink-0" />
             <div>
-              <div className="text-xs font-bold text-rose-900">000 (Triple Zero)</div>
-              <div className="text-[11px] text-rose-700">Immediate Life-Threatening Emergency</div>
+              <div className="text-xs font-bold text-rose-900">
+                112 — National Emergency Number
+              </div>
+              <div className="text-[11px] text-rose-700">
+                Emergency assistance in India
+              </div>
             </div>
           </a>
 
           <a
-            href="tel:1800022222"
+            href="tel:108"
             className="flex items-center gap-3 rounded-xl border border-sand-200 bg-sand-50 p-3.5 transition hover:bg-sand-100"
           >
             <Phone className="h-5 w-5 text-teal-600 shrink-0" />
             <div>
-              <div className="text-xs font-bold text-stone-900">1800 022 222 (Healthdirect)</div>
-              <div className="text-[11px] text-stone-600">24/7 Registered Nurse Advice</div>
+              <div className="text-xs font-bold text-stone-900">
+                108 — Ambulance Service
+              </div>
+              <div className="text-[11px] text-stone-600">
+                Where available in your state
+              </div>
             </div>
           </a>
 
           <a
-            href="tel:131114"
+            href="tel:181"
             className="flex items-center gap-3 rounded-xl border border-sand-200 bg-sand-50 p-3.5 transition hover:bg-sand-100"
           >
             <Phone className="h-5 w-5 text-plum-600 shrink-0" />
             <div>
-              <div className="text-xs font-bold text-stone-900">13 11 14 (Lifeline)</div>
-              <div className="text-[11px] text-stone-600">24/7 Crisis Support & Counselling</div>
+              <div className="text-xs font-bold text-stone-900">
+                181 — Women Helpline
+              </div>
+              <div className="text-[11px] text-stone-600">
+                Women's support, subject to state availability
+              </div>
             </div>
           </a>
 
           <a
-            href="tel:1800737732"
+            href="tel:14416"
             className="flex items-center gap-3 rounded-xl border border-sand-200 bg-sand-50 p-3.5 transition hover:bg-sand-100"
           >
             <Phone className="h-5 w-5 text-amber-600 shrink-0" />
             <div>
-              <div className="text-xs font-bold text-stone-900">1800 737 732 (1800RESPECT)</div>
-              <div className="text-[11px] text-stone-600">Domestic, Family & Sexual Violence Support</div>
+              <div className="text-xs font-bold text-stone-900">
+                14416 — Tele-MANAS
+              </div>
+              <div className="text-[11px] text-stone-600">
+                24/7 mental health support
+              </div>
             </div>
           </a>
         </div>
@@ -107,7 +135,10 @@ export function UrgentCarePanel({ isOpen, onClose }: UrgentCarePanelProps) {
         <div className="rounded-xl bg-sand-100 p-3 text-[11px] text-stone-600 flex items-start gap-2">
           <ShieldAlert className="h-4 w-4 text-stone-500 shrink-0 mt-0.5" />
           <span>
-            HerHealth Companion is a personal health tracking journal and does not provide clinical monitoring, diagnostics, or emergency dispatch.
+            HerHealth Companion is a personal health tracking journal. It does
+            not provide clinical monitoring, medical diagnosis, treatment, or
+            emergency dispatch. In an emergency, call 112 or seek immediate
+            medical care.
           </span>
         </div>
       </div>

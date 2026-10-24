@@ -7,8 +7,7 @@ function executeQuickEscape() {
   } catch {
     // Ignore storage errors
   }
-  // Redirect to an innocuous, everyday external Australian website
-  window.location.replace('https://www.bom.gov.au');
+  window.location.replace('https://www.google.com');
 }
 
 export function QuickEscapeButton({ className = '' }: { className?: string }) {

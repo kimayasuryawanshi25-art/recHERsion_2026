@@ -152,14 +152,7 @@ export function AppShell({
           </span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => navigate('/journal/new')}
-          className="mb-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#5B4B8A] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-violet-900/10 transition-all duration-200 hover:bg-[#493B72] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#9B72CF] focus:ring-offset-2"
-        >
-          <Plus className="h-4 w-4" />
-          New check-in
-        </button>
+
 
         <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400">
           Your health space
@@ -302,87 +295,138 @@ export function AppShell({
         )}
 
         {/* Page header */}
-        <div className="no-print hidden items-center justify-between border-b border-[#EDE7F6] bg-white/65 px-8 py-4 backdrop-blur-xl lg:flex">
-          <div>
-            <p className="text-xs text-stone-400">
-              HerHealth Companion <span className="mx-1">/</span>{' '}
-              {NAV.find(item =>
-              item.to === '/overview'
-              ? location.pathname === '/overview'
-              : location.pathname.startsWith(item.to)
-              )?.label ?? 'Health space'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <QuickEscapeButton />
+       
+{/* Responsive page header */}
+<header className="no-print sticky top-0 z-20 hidden items-center justify-between gap-4 border-b border-[#E9E2F1] bg-white/90 px-5 py-3 backdrop-blur-xl md:flex lg:px-8">
+  {/* Page title and breadcrumb */}
+  <div className="min-w-0">
+    <p className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-stone-400">
+      <span>{appName}</span>
+      <ChevronRight className="h-3 w-3 shrink-0" />
+      <span className="truncate text-[#70529A]">
+        {NAV.find(item =>
+          item.to === '/overview'
+            ? location.pathname === '/overview'
+            : location.pathname.startsWith(item.to)
+        )?.label ?? 'Health space'}
+      </span>
+    </p>
 
-            {/* Language Selector Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setLangMenuOpen(open => !open)}
-                className="flex items-center gap-1.5 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:border-[#9B72CF] hover:text-[#5B4B8A]"
-                aria-haspopup="true"
-                aria-expanded={langMenuOpen}
-                aria-label="Select language"
-              >
-                <Globe className="h-3.5 w-3.5 text-[#5B4B8A]" />
-                <span className="font-semibold uppercase">{language}</span>
-              </button>
-              {langMenuOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-44 rounded-2xl border border-sand-200 bg-white p-1.5 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150"
-                  role="menu"
-                >
-                  {AVAILABLE_LANGUAGES.map(lang => (
-                    <button
-                      key={lang.code}
-                      role="menuitem"
-                      type="button"
-                      onClick={() => {
-                        setLanguage(lang.code);
-                        setLangMenuOpen(false);
-                      }}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs transition ${
-                        language === lang.code
-                          ? 'bg-[#EDE7F6] font-bold text-[#5B4B8A]'
-                          : 'text-stone-700 hover:bg-sand-50'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{lang.flag}</span>
-                        <span>{lang.native}</span>
-                      </span>
-                      <span className="text-[10px] text-stone-400 font-mono uppercase">{lang.code}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+    <h1 className="truncate text-lg font-bold tracking-tight text-stone-900">
+      {NAV.find(item =>
+        item.to === '/overview'
+          ? location.pathname === '/overview'
+          : location.pathname.startsWith(item.to)
+      )?.label ?? 'Your health space'}
+    </h1>
+  </div>
 
+  {/* Icon-only header actions */}
+  <div className="flex shrink-0 items-center gap-2">
+    {/* Quick Escape */}
+    
+<button
+  type="button"
+  onClick={() => {
+    <QuickEscapeButton />
+  }}
+  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E9E2F1] bg-white text-stone-600 transition hover:bg-[#FAF8FD]"
+  aria-label="Quick Exit"
+  title="Quick Exit"
+>
+  <Leaf className="h-5 w-5" />
+</button>
+
+
+    {/* Language selector */}
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setLangMenuOpen(open => !open)}
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E9E2F1] bg-white text-[#70529A] transition hover:border-[#BBA5D8] hover:bg-[#FAF8FD]"
+        aria-haspopup="true"
+        aria-expanded={langMenuOpen}
+        aria-label={`Language: ${language}`}
+        title={`Language: ${language.toUpperCase()}`}
+      >
+        <Globe className="h-5 w-5" />
+      </button>
+
+      {langMenuOpen && (
+        <div
+          className="absolute right-0 z-50 mt-2 w-48 rounded-2xl border border-[#E9E2F1] bg-white p-1.5 shadow-xl"
+          role="menu"
+        >
+          {AVAILABLE_LANGUAGES.map(lang => (
             <button
+              key={lang.code}
+              role="menuitem"
               type="button"
-              onClick={() => setUrgentCareOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50"
+              onClick={() => {
+                setLanguage(lang.code);
+                setLangMenuOpen(false);
+              }}
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs transition ${
+                language === lang.code
+                  ? 'bg-[#F0E9FA] font-bold text-[#5B4B8A]'
+                  : 'text-stone-700 hover:bg-stone-50'
+              }`}
             >
-              <AlertOctagon className="h-3.5 w-3.5 text-rose-600" />
-              <span>Urgent Care</span>
+              <span className="flex items-center gap-2">
+                <span>{lang.flag}</span>
+                <span>{lang.native}</span>
+              </span>
+              <span className="font-mono text-[10px] uppercase text-stone-400">
+                {lang.code}
+              </span>
             </button>
-            <SyncStatusBadge onClick={() => setAuthModalOpen(true)} />
-            <button
-              type="button"
-              onClick={onToggleDiscreet}
-              className="flex items-center gap-2 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:border-[#9B72CF] hover:text-[#5B4B8A]"
-            >
-              {discreetMode ? (
-                <EyeOff className="h-3.5 w-3.5" />
-              ) : (
-                <Eye className="h-3.5 w-3.5" />
-              )}
-              {discreetMode ? 'Discreet mode on' : 'Discreet mode'}
-            </button>
-          </div>
+          ))}
         </div>
+      )}
+    </div>
+
+    {/* Urgent Care */}
+    <button
+      type="button"
+      onClick={() => setUrgentCareOpen(true)}
+      className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
+      aria-label="Urgent Care"
+      title="Urgent Care"
+    >
+      <AlertOctagon className="h-5 w-5 text-rose-600" />
+    </button>
+
+    {/* Sync status */}
+    <div
+      className="flex h-10 items-center justify-center rounded-xl border border-[#E9E2F1] bg-white px-1"
+      title="Sync status"
+    >
+      <SyncStatusBadge onClick={() => setAuthModalOpen(true)} />
+      
+    </div>
+
+    {/* Discreet mode */}
+    <button
+      type="button"
+      onClick={onToggleDiscreet}
+      className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+        discreetMode
+          ? 'border-[#C8B5E2] bg-[#F0E9FA] text-[#5B4B8A]'
+          : 'border-[#E9E2F1] bg-white text-stone-600 hover:bg-[#FAF8FD]'
+      }`}
+      aria-label={discreetMode ? 'Disable discreet mode' : 'Enable discreet mode'}
+      aria-pressed={discreetMode}
+      title={discreetMode ? 'Discreet mode on' : 'Discreet mode'}
+    >
+      {discreetMode ? (
+        <EyeOff className="h-5 w-5" />
+      ) : (
+        <Eye className="h-5 w-5" />
+      )}
+    </button>
+  </div>
+</header>
+
 
         <main
           id="main-content"
